@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>SIDIK-KAKAO Dashboard Poktan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f2f9f4',
+              100: '#e1f2e5',
+              600: '#2e6f40',
+              700: '#11562a',
+              800: '#0a421e',
+            },
+            cacao: {
+              500: '#775652',
+              700: '#4a2e2b',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen">
+
+  <!-- Mobile Overlay & Sidebar Drawer -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+  <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200/80 z-50 flex flex-col justify-between py-5 transition-transform duration-300 -translate-x-full lg:translate-x-0">
+    <div class="flex flex-col gap-6 px-4">
+      <!-- Brand & Poktan Info -->
+      <div class="flex items-center gap-3 pt-1">
+        <img src="./Ico.png" alt="Logo SIDIK-KAKAO" class="h-9 w-9 rounded-xl bg-brand-600 flex items-center justify-center text-white font-display font-bold text-lg shadow-sm">
+        <div class="flex flex-col">
+          <span class="font-display font-bold text-base text-slate-900 tracking-tight leading-none">SIDIK-KAKAO</span>
+          <span class="text-xs text-slate-500 font-medium mt-1">Poktan Kakao Utama</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex flex-col gap-1 mt-2">
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-brand-50 text-brand-700 font-semibold text-sm transition-colors" href="#">
+          <span class="material-symbols-outlined text-[20px]">space_dashboard</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium text-sm transition-colors" href="#">
+          <span class="material-symbols-outlined text-[20px]">group</span>
+          <span>Data Petani</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium text-sm transition-colors" href="#">
+          <span class="material-symbols-outlined text-[20px]">inventory</span>
+          <span>Rekap Panen</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium text-sm transition-colors" href="#">
+          <span class="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+          <span>Ketertelusuran</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium text-sm transition-colors" href="#">
+          <span class="material-symbols-outlined text-[20px]">psychology</span>
+          <span>AI Insight</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Bottom Sync Indicator -->
+    <div class="px-4 flex flex-col gap-3">
+      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-[18px] text-brand-600">cloud_done</span>
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold text-slate-800">Sinkron Aktif</span>
+            <span class="text-[11px] text-slate-500">Offline-Ready</span>
+          </div>
+        </div>
+        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      </div>
+      <a class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors" href="#">
+        <span class="material-symbols-outlined text-[18px]">help</span>
+        <span>Bantuan & Support</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main View Container -->
+  <div class="lg:pl-64 flex flex-col min-h-screen">
+    
+    <!-- Top Bar -->
+    <header class="sticky top-0 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 z-30 px-4 lg:px-8 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100" onclick="toggleSidebar()" aria-label="Toggle Menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative hidden sm:flex items-center w-64">
+          <span class="material-symbols-outlined absolute left-3 text-[18px] text-slate-400 pointer-events-none">search</span>
+          <input class="w-full h-9 pl-9 pr-3 rounded-xl bg-slate-100 text-slate-800 placeholder:text-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-brand-600/30 transition-all" placeholder="Cari petani, lot, batch..." type="text"/>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div class="hidden sm:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl text-slate-700 text-xs font-medium">
+          <span class="material-symbols-outlined text-[16px] text-cacao-500">calendar_month</span>
+          <span>Musim Utama 2024</span>
+        </div>
+        <button class="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Notifikasi">
+          <span class="material-symbols-outlined text-[20px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
+        </button>
+        <div class="h-5 w-[1px] bg-slate-200"></div>
+        <div class="flex items-center gap-2.5">
+          <div class="text-right hidden sm:flex flex-col">
+            <span class="text-xs font-semibold text-slate-900 leading-tight">Admin Poktan</span>
+            <span class="text-[11px] text-slate-500">Luwu Utara</span>
+          </div>
+          <div class="h-8 w-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center border border-brand-600/20">
+            <span class="material-symbols-outlined text-[20px]">person</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Body -->
+    <main class="flex-1 px-4 lg:px-8 py-6 space-y-6 w-full mx-auto">
+
+      <!-- Page Header & Action Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 class="font-display font-bold text-2xl text-slate-900 tracking-tight">Ikhtisar Dashboard</h1>
+          <p class="text-sm text-slate-500 mt-1">Pemantauan produksi, transparansi harga, dan ketertelusuran kakao.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="h-10 px-4 inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm rounded-xl shadow-sm hover:shadow transition-all active:scale-[0.98]">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            <span>Setoran Panen</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scannable AI Early Warning Alert -->
+      <div class="bg-amber-50/90 border border-amber-200 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+        <div class="flex items-start gap-3">
+          <div class="h-9 w-9 shrink-0 rounded-lg bg-amber-500 text-white flex items-center justify-center shadow-xs">
+            <span class="material-symbols-outlined text-[20px]">warning</span>
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-amber-900 uppercase tracking-wider">Peringatan Cuaca</span>
+              <span class="text-[11px] text-amber-700">• BMKG Luwu</span>
+            </div>
+            <p class="text-sm text-amber-950 leading-snug">
+              Curah hujan tinggi 5 hari ke depan. Potensi kenaikan kadar air biji <strong class="font-semibold text-amber-900">+2.5%</strong>.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button class="h-9 px-3.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs transition-colors">
+            Rekomendasi Mitigasi
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Grid (4 Cards) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Metric 1 -->
+        <div class="bg-white border border-slate-200/80 p-4 rounded-xl shadow-xs flex flex-col justify-between space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Total Produksi</span>
+            <span class="p-2 rounded-lg bg-brand-50 text-brand-600">
+              <span class="material-symbols-outlined text-[18px]">scale</span>
+            </span>
+          </div>
+          <div>
+            <span class="font-display font-bold text-2xl text-slate-900">12.4</span>
+            <span class="text-sm font-medium text-slate-500">Ton</span>
+          </div>
+          <div class="flex items-center text-xs text-emerald-700 font-medium gap-1">
+            <span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+            <span>+18.2% vs target</span>
+          </div>
+        </div>
+
+        <!-- Metric 2 -->
+        <div class="bg-white border border-slate-200/80 p-4 rounded-xl shadow-xs flex flex-col justify-between space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Petani Aktif Setor</span>
+            <span class="p-2 rounded-lg bg-slate-100 text-slate-700">
+              <span class="material-symbols-outlined text-[18px]">groups</span>
+            </span>
+          </div>
+          <div>
+            <span class="font-display font-bold text-2xl text-slate-900">48</span>
+            <span class="text-sm font-medium text-slate-500">/ 50 Orang</span>
+          </div>
+          <span class="text-xs text-slate-500 font-medium">96% partisipasi poktan</span>
+        </div>
+
+        <!-- Metric 3 -->
+        <div class="bg-white border border-slate-200/80 p-4 rounded-xl shadow-xs flex flex-col justify-between space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Rata-Rata Harga</span>
+            <span class="p-2 rounded-lg bg-amber-50 text-cacao-500">
+              <span class="material-symbols-outlined text-[18px]">payments</span>
+            </span>
+          </div>
+          <div>
+            <span class="font-display font-bold text-2xl text-slate-900">Rp 50.000</span>
+            <span class="text-sm font-medium text-slate-500">/Kg</span>
+          </div>
+          <span class="text-xs text-emerald-700 font-medium">+Rp 2.000 vs pasar lokal</span>
+        </div>
+
+        <!-- Metric 4 -->
+        <div class="bg-white border border-slate-200/80 p-4 rounded-xl shadow-xs flex flex-col justify-between space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Skor Ketertelusuran</span>
+            <span class="p-2 rounded-lg bg-brand-600 text-white">
+              <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
+            </span>
+          </div>
+          <div>
+            <span class="font-display font-bold text-2xl text-brand-700">98%</span>
+          </div>
+          <span class="text-xs font-medium text-brand-700">47/48 Batch Terverifikasi QR</span>
+        </div>
+      </div>
+
+      <!-- Analytics Section (Line & Donut Charts) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Dual Y-Axis Trend Chart (7 cols) -->
+        <div class="lg:col-span-7 bg-white border border-slate-200/80 p-5 rounded-xl shadow-xs flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="font-display font-bold text-base text-slate-900">Tren Volume & Harga Jual</h2>
+              <p class="text-xs text-slate-500">Statistik agregat 6 bulan terakhir</p>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-medium">
+              <div class="flex items-center gap-1.5">
+                <span class="h-2.5 w-2.5 rounded-full bg-brand-600"></span>
+                <span class="text-slate-700">Volume (Ton)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="h-2.5 w-2.5 rounded-full bg-cacao-500"></span>
+                <span class="text-slate-700">Harga (Rp/Kg)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SVG Dual-Axis Chart Visual -->
+          <div class="relative w-full h-56 select-none">
+            <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 500 180" aria-label="Grafik Tren">
+              <!-- Y-Axis Gridlines -->
+              <line x1="40" y1="20" x2="460" y2="20" stroke="#f1f5f9" stroke-width="1"/>
+              <line x1="40" y1="60" x2="460" y2="60" stroke="#f1f5f9" stroke-width="1"/>
+              <line x1="40" y1="100" x2="460" y2="100" stroke="#f1f5f9" stroke-width="1"/>
+              <line x1="40" y1="140" x2="460" y2="140" stroke="#f1f5f9" stroke-width="1"/>
+
+              <!-- Volume Area & Line (Green) -->
+              <polygon fill="#2e6f40" fill-opacity="0.1" points="40,140 120,110 200,90 280,75 360,55 440,30 440,150 40,150"/>
+              <polyline fill="none" stroke="#2e6f40" stroke-width="2.5" points="40,140 120,110 200,90 280,75 360,55 440,30"/>
+
+              <!-- Price Line (Brown Dash) -->
+              <polyline fill="none" stroke="#775652" stroke-width="2" stroke-dasharray="4 3" points="40,130 120,120 200,100 280,85 360,70 440,60"/>
+
+              <!-- Dots -->
+              <circle cx="440" cy="30" r="4" fill="#2e6f40"/>
+              <circle cx="440" cy="60" r="4" fill="#775652"/>
+            </svg>
+
+            <!-- Dual Y-Axis Labels -->
+            <div class="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[10px] font-semibold text-brand-600">
+              <span>15T</span><span>10T</span><span>5T</span><span>0T</span>
+            </div>
+            <div class="absolute right-0 top-0 bottom-6 flex flex-col justify-between text-[10px] font-semibold text-cacao-500">
+              <span>55k</span><span>50k</span><span>45k</span><span>40k</span>
+            </div>
+          </div>
+
+          <!-- X-Axis Months -->
+          <div class="grid grid-cols-6 text-center text-xs font-medium text-slate-500 pt-2 border-t border-slate-100">
+            <span>Mei</span><span>Jun</span><span>Jul</span><span>Ags</span><span>Sep</span>
+            <span class="font-bold text-brand-700">Okt</span>
+          </div>
+        </div>
+
+        <!-- Quality Distribution Chart (5 cols) -->
+        <div class="lg:col-span-5 bg-white border border-slate-200/80 p-5 rounded-xl shadow-xs flex flex-col justify-between">
+          <div>
+            <h2 class="font-display font-bold text-base text-slate-900">Distribusi Mutu Kakao</h2>
+            <p class="text-xs text-slate-500">Kualifikasi Standar SNI</p>
+          </div>
+
+          <!-- Donut Graphic -->
+          <div class="flex items-center justify-center my-4 relative">
+            <svg class="w-40 h-40 transform -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#f1f5f9" stroke-width="12"/>
+              <!-- Non-Standard (8%) -->
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#ef4444" stroke-width="12" stroke-dasharray="19.1 219.6" stroke-dashoffset="-219.6"/>
+              <!-- Grade B (24%) -->
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#775652" stroke-width="12" stroke-dasharray="57.3 181.4" stroke-dashoffset="-162.3"/>
+              <!-- Grade A (68%) -->
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#2e6f40" stroke-width="12" stroke-dasharray="162.3 76.4" stroke-dashoffset="0"/>
+            </svg>
+            <div class="absolute text-center">
+              <span class="text-2xl font-bold font-display text-slate-900 block">68%</span>
+              <span class="text-[11px] font-semibold text-brand-700">Grade A SNI</span>
+            </div>
+          </div>
+
+          <!-- Legend List -->
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+              <div class="flex items-center gap-2">
+                <span class="h-2.5 w-2.5 rounded-full bg-brand-600"></span>
+                <span class="font-medium text-slate-800">Grade A (Kering SNI)</span>
+              </div>
+              <span class="font-semibold text-slate-900">8.432 Kg (68%)</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+              <div class="flex items-center gap-2">
+                <span class="h-2.5 w-2.5 rounded-full bg-cacao-500"></span>
+                <span class="font-medium text-slate-800">Grade B (Fermentasi)</span>
+              </div>
+              <span class="font-semibold text-slate-900">2.976 Kg (24%)</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+              <div class="flex items-center gap-2">
+                <span class="h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                <span class="font-medium text-slate-800">Non-Standard (Asalan)</span>
+              </div>
+              <span class="font-semibold text-slate-900">992 Kg (8%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Section -->
+      <div class="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+        <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100">
+          <div>
+            <h2 class="font-display font-bold text-base text-slate-900">Setoran Panen Terbaru</h2>
+            <p class="text-xs text-slate-500">Verifikasi fisik & QR Code dari aplikasi mobile petani.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input class="h-9 px-3 rounded-lg bg-slate-100 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none" placeholder="Cari nama petani..." type="text"/>
+            <button class="h-9 px-3 rounded-lg bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors">
+              Filter
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200/60">
+                <th class="py-3 px-4">ID Batch</th>
+                <th class="py-3 px-4">Nama Petani</th>
+                <th class="py-3 px-4">Waktu Setor</th>
+                <th class="py-3 px-4">Berat & Mutu</th>
+                <th class="py-3 px-4">Kadar Air</th>
+                <th class="py-3 px-4">Total Nilai</th>
+                <th class="py-3 px-4">Status QR</th>
+                <th class="py-3 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="py-3.5 px-4 font-mono font-semibold text-brand-700">BTH-KK-089</td>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">Budi Santoso</td>
+                <td class="py-3.5 px-4 text-slate-500">25 Okt, 09:30</td>
+                <td class="py-3.5 px-4">
+                  <span class="font-bold text-slate-900">125 Kg</span>
+                  <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Grade A</span>
+                </td>
+                <td class="py-3.5 px-4 font-medium text-emerald-700">6.8% (Optimal)</td>
+                <td class="py-3.5 px-4 font-bold text-slate-900">Rp 6.250.000</td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">
+                    <span class="material-symbols-outlined text-[13px]">check_circle</span> Terverifikasi
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <button class="h-7 px-2.5 rounded-lg bg-brand-50 text-brand-700 font-semibold hover:bg-brand-100 transition-colors">
+                    Cetak Label
+                  </button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="py-3.5 px-4 font-mono font-semibold text-brand-700">BTH-KK-088</td>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">Joko Warsito</td>
+                <td class="py-3.5 px-4 text-slate-500">24 Okt, 14:15</td>
+                <td class="py-3.5 px-4">
+                  <span class="font-bold text-slate-900">210 Kg</span>
+                  <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Grade A</span>
+                </td>
+                <td class="py-3.5 px-4 font-medium text-emerald-700">7.1% (Optimal)</td>
+                <td class="py-3.5 px-4 font-bold text-slate-900">Rp 10.500.000</td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">
+                    <span class="material-symbols-outlined text-[13px]">check_circle</span> Terverifikasi
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <button class="h-7 px-2.5 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors">
+                    Detail
+                  </button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="py-3.5 px-4 font-mono font-semibold text-cacao-500">BTH-KK-087</td>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">Siti Rohmah</td>
+                <td class="py-3.5 px-4 text-slate-500">24 Okt, 11:00</td>
+                <td class="py-3.5 px-4">
+                  <span class="font-bold text-slate-900">95 Kg</span>
+                  <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900">Grade B</span>
+                </td>
+                <td class="py-3.5 px-4 font-medium text-amber-800">10.2% (Perlu Jemur)</td>
+                <td class="py-3.5 px-4 font-bold text-slate-900">Rp 4.560.000</td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900">
+                    <span class="material-symbols-outlined text-[13px]">hourglass_top</span> Curing
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <button class="h-7 px-2.5 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors">
+                    Detail
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      sidebar.classList.toggle('-translate-x-full');
+      overlay.classList.toggle('hidden');
+    }
+  </script>
+</body>
+</html>
