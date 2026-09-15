@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
+import { getHarvests, type HarvestRecord } from "../../utils/storage";
 
 /* ── Mock Data ── */
 const FARMER = {
@@ -218,6 +219,26 @@ function WeatherBar() {
 
 /* ── Recent Logs ── */
 function RecentLogsSection() {
+  const [logs, setLogs] = useState<HarvestLog[]>(RECENT_LOGS);
+
+  useEffect(() => {
+    const stored = getHarvests();
+    if (stored.length === 0) return;
+
+    const localLogs: HarvestLog[] = stored.map((r: HarvestRecord) => ({
+      id: r.id,
+      date: r.dateFormatted.split(",")[0].trim(),
+      weight: `${r.weightKg} Kg`,
+      grade: r.gradeLabel,
+      status: r.status === "Terverifikasi" ? "terverifikasi" : "curing",
+    }));
+
+    // Prepend local entries, filtering out any mock duplicates
+    const mockIds = new Set(RECENT_LOGS.map((l) => l.id));
+    const filtered = localLogs.filter((l) => !mockIds.has(l.id));
+    setLogs([...filtered, ...RECENT_LOGS]);
+  }, []);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -225,7 +246,7 @@ function RecentLogsSection() {
         <button className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">Lihat Semua</button>
       </div>
       <div className="space-y-2">
-        {RECENT_LOGS.map((log) => (
+        {logs.map((log) => (
           <div key={log.id} className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex items-center gap-3">
             <div className="h-10 w-10 shrink-0 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
               <MaterialIcon name="inventory_2" size={20} />

@@ -2,6 +2,12 @@ import { useState, useRef, useCallback } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import { MOCK_GRADE_PRICES } from "../../data/mock";
 import type { BeanCategory, CacaoGrade, AiAnalysisResult } from "../../types";
+import {
+  generateBatchId,
+  formatDateId,
+  saveHarvest,
+  type HarvestRecord,
+} from "../../utils/storage";
 
 /* ── Category Config ── */
 const CATEGORIES: { key: BeanCategory; label: string; icon: string }[] = [
@@ -35,6 +41,8 @@ export default function CatatForm() {
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResult, setAiResult] = useState<AiAnalysisResult | null>(null);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [savedRecord, setSavedRecord] = useState<HarvestRecord | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* Valuation (reactive) */
@@ -69,8 +77,35 @@ export default function CatatForm() {
   /* Submit handler */
   const handleSubmit = () => {
     if (navigator.vibrate) navigator.vibrate(50);
-    alert("Panen berhasil dicatat! Label QR akan segera digenerate.");
-    window.location.href = "/petani";
+
+    const now = new Date();
+    const grade = aiResult?.grade ?? "A";
+    const batchId = generateBatchId();
+
+    const record: HarvestRecord = {
+      id: batchId,
+      farmerName: "Budi Santoso",
+      date: now.toISOString(),
+      dateFormatted: formatDateId(now),
+      weightKg: parsedWeight,
+      category,
+      grade,
+      gradeLabel: grade === "A" ? "Grade A (SNI)" : "Grade B",
+      fungalStatus: aiResult?.fungalStatus ?? "Bebas Jamur",
+      totalValue: estimatedTotal,
+      pricePerKg,
+      status: grade === "A" ? "Terverifikasi" : "Proses Curing",
+      qrPayload: JSON.stringify({
+        id: batchId,
+        weightKg: parsedWeight,
+        grade,
+        timestamp: now.toISOString(),
+      }),
+    };
+
+    saveHarvest(record);
+    setSavedRecord(record);
+    setShowQrModal(true);
   };
 
   return (
@@ -133,6 +168,13 @@ export default function CatatForm() {
           )}
         </section>
       </main>
+
+      {showQrModal && savedRecord && (
+        <QrModal
+          record={savedRecord}
+          onClose={() => setShowQrModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -486,6 +528,212 @@ function ValuationCard({
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   QR Code Label Modal
+   ══════════════════════════════════════════════ */
+
+/**
+ * Generate a deterministic QR-like SVG grid from a seed string.
+ * Uses a simple hash to fill a 21×21 matrix (standard QR Version 1).
+ */
+function generateQrGrid(seed: string): boolean[][] {
+  const size = 21;
+  const grid: boolean[][] = Array.from({ length: size }, () =>
+    Array(size).fill(false)
+  );
+
+  // Simple deterministic hash from seed
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
+  }
+
+  const rand = () => {
+    hash = (hash * 16807 + 12345) & 0x7fffffff;
+    return hash / 0x7fffffff;
+  };
+
+  // Finder patterns (top-left, top-right, bottom-left)
+  const drawFinder = (row: number, col: number) => {
+    for (let r = -1; r <= 7; r++) {
+      for (let c = -1; c <= 7; c++) {
+        const rr = row + r;
+        const cc = col + c;
+        if (rr < 0 || rr >= size || cc < 0 || cc >= size) continue;
+        const isBorder = r === -1 || r === 7 || c === -1 || c === 7;
+        const isOuter = r === 0 || r === 6 || c === 0 || c === 6;
+        const isInner = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+        grid[rr][cc] = isBorder ? false : isOuter || isInner;
+      }
+    }
+  };
+
+  drawFinder(0, 0);
+  drawFinder(0, 14);
+  drawFinder(14, 0);
+
+  // Timing patterns
+  for (let i = 8; i < 13; i++) {
+    grid[6][i] = i % 2 === 0;
+    grid[i][6] = i % 2 === 0;
+  }
+
+  // Fill remaining cells pseudo-randomly
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const inFinder =
+        (r < 8 && c < 8) || (r < 8 && c > 12) || (r > 12 && c < 8);
+      const inTiming = r === 6 || c === 6;
+      if (!inFinder && !inTiming && !grid[r][c]) {
+        grid[r][c] = rand() > 0.5;
+      }
+    }
+  }
+
+  return grid;
+}
+
+function QrCodeSvg({ payload }: { payload: string }) {
+  const grid = generateQrGrid(payload);
+  const cellSize = 8;
+  const size = grid.length * cellSize;
+
+  return (
+    <svg
+      viewBox={`0 0 ${size} ${size}`}
+      width={size}
+      height={size}
+      className="mx-auto"
+    >
+      <rect width={size} height={size} fill="white" />
+      {grid.map((row, r) =>
+        row.map((filled, c) =>
+          filled ? (
+            <rect
+              key={`${r}-${c}`}
+              x={c * cellSize}
+              y={r * cellSize}
+              width={cellSize}
+              height={cellSize}
+              fill="#11562a"
+            />
+          ) : null
+        )
+      )}
+    </svg>
+  );
+}
+
+function QrModal({
+  record,
+  onClose,
+}: {
+  record: HarvestRecord;
+  onClose: () => void;
+}) {
+  const gradeBadgeClass =
+    record.grade === "A"
+      ? "bg-emerald-100 text-emerald-800"
+      : "bg-amber-100 text-amber-800";
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        style={{ animation: "modalSlideUp 0.3s ease-out" }}
+      >
+        {/* Header */}
+        <div className="bg-emerald-50 px-6 pt-6 pb-4 text-center">
+          <div className="h-14 w-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
+            <MaterialIcon name="check_circle" size={32} />
+          </div>
+          <h2 className="font-display font-bold text-lg text-emerald-900 mt-3">
+            Panen Berhasil Dicatat!
+          </h2>
+          <p className="text-xs text-emerald-700 mt-1">
+            Label QR Batch telah digenerate
+          </p>
+        </div>
+
+        {/* QR Display */}
+        <div className="px-6 py-5 flex flex-col items-center">
+          <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-xs">
+            <QrCodeSvg payload={record.qrPayload} />
+          </div>
+          <p className="font-mono font-bold text-sm text-slate-600 mt-3 tracking-wide">
+            {record.id}
+          </p>
+        </div>
+
+        {/* Batch Summary Sheet */}
+        <div className="mx-6 mb-4 bg-slate-50 rounded-xl p-4 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500">ID Batch</span>
+            <span className="text-sm font-mono font-bold text-slate-800">
+              {record.id}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500">Total Berat &amp; Grade</span>
+            <span className="text-sm font-semibold text-slate-800">
+              {record.weightKg} Kg{" "}
+              <span
+                className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${gradeBadgeClass}`}
+              >
+                {record.gradeLabel}
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500">Nilai Panen</span>
+            <span className="text-sm font-bold text-slate-900">
+              Rp {record.totalValue.toLocaleString("id-ID")}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500">Waktu Input</span>
+            <span className="text-sm font-medium text-slate-700">
+              {record.dateFormatted}
+            </span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="px-6 pb-6 space-y-2.5">
+          <button
+            onClick={handlePrint}
+            className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white font-display font-bold text-sm rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <MaterialIcon name="print" size={20} className="text-white" />
+            Cetak Label QR
+          </button>
+          <button
+            onClick={() => { window.location.href = "/petani"; }}
+            className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            Selesai &amp; Kembali ke Beranda
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(24px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { HarvestBatch, Grade } from "../../types";
+import { getHarvests, type HarvestRecord } from "../../utils/storage";
 import SearchInput from "../ui/SearchInput";
 import Button from "../ui/Button";
 import StatusBadge from "./StatusBadge";
@@ -26,8 +27,32 @@ function GradeBadge({ grade }: { grade: Grade }) {
 
 export default function HarvestTable({ batches }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [allBatches, setAllBatches] = useState<HarvestBatch[]>(batches);
 
-  const filteredBatches = batches.filter((b) =>
+  useEffect(() => {
+    const stored = getHarvests();
+    if (stored.length === 0) return;
+
+    const localBatches: HarvestBatch[] = stored.map((r: HarvestRecord) => ({
+      id: r.id,
+      farmerName: r.farmerName,
+      timestamp: r.dateFormatted,
+      weight: `${r.weightKg} Kg`,
+      grade: r.grade as Grade,
+      moisture: "—",
+      moistureStatus: "optimal" as const,
+      totalValue: `Rp ${r.totalValue.toLocaleString("id-ID")}`,
+      status: r.status === "Terverifikasi" ? "terverifikasi" as const : "curing" as const,
+      actionLabel: "Cetak Label",
+    }));
+
+    // Prepend local entries, filtering out any mock duplicates
+    const mockIds = new Set(batches.map((b) => b.id));
+    const filtered = localBatches.filter((b) => !mockIds.has(b.id));
+    setAllBatches([...filtered, ...batches]);
+  }, [batches]);
+
+  const filteredBatches = allBatches.filter((b) =>
     b.farmerName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
