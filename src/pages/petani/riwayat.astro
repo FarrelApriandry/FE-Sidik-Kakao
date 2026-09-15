@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import RiwayatPage from '../../components/mobile/RiwayatPage';
+---
+
+<Layout title="SIDIK-KAKAO • Riwayat Panen">
+  <div class="min-h-screen bg-slate-100 flex items-start justify-center">
+    <div class="w-full max-w-[430px] bg-slate-50 min-h-screen shadow-xl lg:border-x lg:border-slate-200/80">
+      <RiwayatPage client:load />
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AkunPage from '../../components/mobile/AkunPage';
+---
+
+<Layout title="SIDIK-KAKAO • Akun Saya">
+  <div class="min-h-screen bg-slate-100 flex items-start justify-center">
+    <div class="w-full max-w-[430px] bg-slate-50 min-h-screen shadow-xl lg:border-x lg:border-slate-200/80">
+      <AkunPage client:load />
+    </div>
+  </div>
+</Layout>

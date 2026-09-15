@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import { getHarvests, type HarvestRecord } from "../../utils/storage";
+import BottomNav from "./BottomNav";
 
 /* ── Mock Data ── */
 const FARMER = {
@@ -44,13 +45,6 @@ const RECENT_LOGS: HarvestLog[] = [
   { id: "BTH-KK-089", date: "08 Okt 2024", weight: "95 Kg", grade: "Grade B", status: "curing" },
 ];
 
-const NAV_ITEMS = [
-  { label: "Beranda", icon: "home" },
-  { label: "Catat", icon: "add_circle" },
-  { label: "Riwayat", icon: "history" },
-  { label: "Akun", icon: "person" },
-];
-
 const STATUS_CFG: Record<LogStatus, { bg: string; text: string; icon: string; label: string }> = {
   terverifikasi: { bg: "bg-emerald-100", text: "text-emerald-800", icon: "check_circle", label: "Terverifikasi" },
   curing: { bg: "bg-amber-100", text: "text-amber-900", icon: "hourglass_top", label: "Proses Curing" },
@@ -67,8 +61,6 @@ function LogStatusBadge({ status }: { status: LogStatus }) {
 }
 
 export default function PetaniApp() {
-  const [activeTab, setActiveTab] = useState(0);
-
   const handleCatatPanen = () => {
     if (navigator.vibrate) navigator.vibrate(50);
     window.location.href = "/petani/catat";
@@ -88,7 +80,7 @@ export default function PetaniApp() {
         today={today}
         onCatatPanen={handleCatatPanen}
       />
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNav activeIndex={0} />
     </div>
   );
 }
@@ -243,7 +235,12 @@ function RecentLogsSection() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-bold text-sm text-slate-900">Riwayat Panen Terakhir</h3>
-        <button className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">Lihat Semua</button>
+        <button
+          onClick={() => { window.location.href = "/petani/riwayat"; }}
+          className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+        >
+          Lihat Semua
+        </button>
       </div>
       <div className="space-y-2">
         {logs.map((log) => (
@@ -268,31 +265,6 @@ function RecentLogsSection() {
         ))}
       </div>
     </div>
-  );
-}
-
-/* ── Bottom Navigation ── */
-function BottomNav({ activeTab, onTabChange }: { activeTab: number; onTabChange: (i: number) => void }) {
-  return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30">
-      <div className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        {NAV_ITEMS.map((item, i) => (
-          <button
-            key={item.label}
-            onClick={() => onTabChange(i)}
-            className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors ${
-              i === activeTab ? "text-brand-600" : "text-slate-400 hover:text-slate-600"
-            }`}
-          >
-            <MaterialIcon name={item.icon} size={22} className={i === activeTab ? "text-brand-600" : "text-slate-400"} />
-            <span className={`text-[10px] font-semibold ${i === activeTab ? "text-brand-600" : "text-slate-400"}`}>
-              {item.label}
-            </span>
-            {i === activeTab && <span className="h-1 w-4 rounded-full bg-brand-600 mt-0.5" />}
-          </button>
-        ))}
-      </div>
-    </nav>
   );
 }
 

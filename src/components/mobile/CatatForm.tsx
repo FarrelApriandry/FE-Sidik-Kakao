@@ -8,6 +8,7 @@ import {
   saveHarvest,
   type HarvestRecord,
 } from "../../utils/storage";
+import { QrCodeSvg } from "../../utils/qr";
 
 /* ── Category Config ── */
 const CATEGORIES: { key: BeanCategory; label: string; icon: string }[] = [
@@ -536,98 +537,6 @@ function ValuationCard({
    QR Code Label Modal
    ══════════════════════════════════════════════ */
 
-/**
- * Generate a deterministic QR-like SVG grid from a seed string.
- * Uses a simple hash to fill a 21×21 matrix (standard QR Version 1).
- */
-function generateQrGrid(seed: string): boolean[][] {
-  const size = 21;
-  const grid: boolean[][] = Array.from({ length: size }, () =>
-    Array(size).fill(false)
-  );
-
-  // Simple deterministic hash from seed
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
-  }
-
-  const rand = () => {
-    hash = (hash * 16807 + 12345) & 0x7fffffff;
-    return hash / 0x7fffffff;
-  };
-
-  // Finder patterns (top-left, top-right, bottom-left)
-  const drawFinder = (row: number, col: number) => {
-    for (let r = -1; r <= 7; r++) {
-      for (let c = -1; c <= 7; c++) {
-        const rr = row + r;
-        const cc = col + c;
-        if (rr < 0 || rr >= size || cc < 0 || cc >= size) continue;
-        const isBorder = r === -1 || r === 7 || c === -1 || c === 7;
-        const isOuter = r === 0 || r === 6 || c === 0 || c === 6;
-        const isInner = r >= 2 && r <= 4 && c >= 2 && c <= 4;
-        grid[rr][cc] = isBorder ? false : isOuter || isInner;
-      }
-    }
-  };
-
-  drawFinder(0, 0);
-  drawFinder(0, 14);
-  drawFinder(14, 0);
-
-  // Timing patterns
-  for (let i = 8; i < 13; i++) {
-    grid[6][i] = i % 2 === 0;
-    grid[i][6] = i % 2 === 0;
-  }
-
-  // Fill remaining cells pseudo-randomly
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      const inFinder =
-        (r < 8 && c < 8) || (r < 8 && c > 12) || (r > 12 && c < 8);
-      const inTiming = r === 6 || c === 6;
-      if (!inFinder && !inTiming && !grid[r][c]) {
-        grid[r][c] = rand() > 0.5;
-      }
-    }
-  }
-
-  return grid;
-}
-
-function QrCodeSvg({ payload }: { payload: string }) {
-  const grid = generateQrGrid(payload);
-  const cellSize = 8;
-  const size = grid.length * cellSize;
-
-  return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      width={size}
-      height={size}
-      className="mx-auto"
-    >
-      <rect width={size} height={size} fill="white" />
-      {grid.map((row, r) =>
-        row.map((filled, c) =>
-          filled ? (
-            <rect
-              key={`${r}-${c}`}
-              x={c * cellSize}
-              y={r * cellSize}
-              width={cellSize}
-              height={cellSize}
-              fill="#11562a"
-            />
-          ) : null
-        )
-      )}
-    </svg>
-  );
-}
-
 function QrModal({
   record,
   onClose,
@@ -727,13 +636,6 @@ function QrModal({
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes modalSlideUp {
-          from { opacity: 0; transform: translateY(24px) scale(0.96); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
     </div>
   );
 }
