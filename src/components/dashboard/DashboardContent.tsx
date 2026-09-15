@@ -1,9 +1,12 @@
+import { useState } from "react";
 import PageHeader from "./PageHeader";
 import AiAlertBanner from "./AiAlertBanner";
 import KpiGrid from "./KpiGrid";
 import TrendChart from "./TrendChart";
 import QualityDonutChart from "./QualityDonutChart";
 import HarvestTable from "./HarvestTable";
+import SetoranModal from "./SetoranModal";
+import BatchDetailModal from "./BatchDetailModal";
 import type {
   KpiMetric,
   WeatherAlert,
@@ -27,6 +30,14 @@ export default function DashboardContent({
   qualitySegments,
   harvestBatches,
 }: Props) {
+  const [isSetoranOpen, setIsSetoranOpen] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState<HarvestBatch | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleSetoranSave = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
   return (
     <main className="p-4 lg:p-8 space-y-6 w-full mx-auto">
       {/* Page Header & Primary Action */}
@@ -35,6 +46,7 @@ export default function DashboardContent({
         subtitle="Pemantauan produksi, transparansi harga, dan ketertelusuran kakao."
         ctaLabel="Setoran Panen"
         ctaIcon="add"
+        onCtaClick={() => setIsSetoranOpen(true)}
       />
 
       {/* AI Early Warning Alert */}
@@ -54,7 +66,24 @@ export default function DashboardContent({
       </div>
 
       {/* Harvest Transactions Table */}
-      <HarvestTable batches={harvestBatches} />
+      <HarvestTable
+        batches={harvestBatches}
+        onDetailClick={setSelectedBatch}
+        refreshKey={refreshKey}
+      />
+
+      {/* Setoran Panen Modal */}
+      <SetoranModal
+        isOpen={isSetoranOpen}
+        onClose={() => setIsSetoranOpen(false)}
+        onSave={handleSetoranSave}
+      />
+
+      {/* Batch Detail Modal */}
+      <BatchDetailModal
+        batch={selectedBatch}
+        onClose={() => setSelectedBatch(null)}
+      />
     </main>
   );
 }

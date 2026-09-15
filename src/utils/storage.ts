@@ -10,6 +10,7 @@ export interface HarvestRecord {
   date: string;
   dateFormatted: string;
   weightKg: number;
+  moisturePct?: number;
   category: BeanCategory;
   grade: CacaoGrade;
   gradeLabel: string;

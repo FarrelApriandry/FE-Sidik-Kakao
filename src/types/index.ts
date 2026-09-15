@@ -48,6 +48,7 @@ export interface HarvestBatch {
   weight: string;
   grade: Grade;
   moisture: string;
+  moisturePct?: number;
   moistureStatus: "optimal" | "perlu-jemur";
   totalValue: string;
   status: BatchStatus;
@@ -59,7 +60,6 @@ export interface NavItem {
   label: string;
   icon: string;
   href: string;
-  isActive: boolean;
 }
 
 // ── Sidebar Props ──
@@ -68,6 +68,7 @@ export interface SidebarProps {
   onClose: () => void;
   navItems: NavItem[];
   syncStatus: SyncStatus;
+  currentPath?: string;
 }
 
 // ── Sync Status ──

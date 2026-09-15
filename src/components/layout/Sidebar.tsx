@@ -7,7 +7,10 @@ export default function Sidebar({
   onClose,
   navItems,
   syncStatus,
+  currentPath = "/dashboard",
 }: SidebarProps) {
+  const normalizedPath = currentPath.replace(/\/+$/, "") || "/dashboard";
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -42,20 +45,23 @@ export default function Sidebar({
 
           {/* Navigation Links */}
           <nav className="flex flex-col gap-1 mt-2">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
-                  item.isActive
-                    ? "bg-brand-50 text-brand-700 font-semibold"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium"
-                }`}
-              >
-                <MaterialIcon name={item.icon} size={20} />
-                <span>{item.label}</span>
-              </a>
-            ))}
+            {navItems.map((item) => {
+              const isActive = normalizedPath === item.href;
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
+                    isActive
+                      ? "bg-brand-50 text-brand-700 font-bold"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium"
+                  }`}
+                >
+                  <MaterialIcon name={item.icon} size={20} />
+                  <span>{item.label}</span>
+                </a>
+              );
+            })}
           </nav>
         </div>
 
@@ -63,7 +69,7 @@ export default function Sidebar({
         <div className="flex flex-col gap-3">
           <SyncStatusCard status={syncStatus} />
           <a
-            href="#"
+            href="/petani/bantuan"
             className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
           >
             <MaterialIcon name="help" size={18} />

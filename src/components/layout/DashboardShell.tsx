@@ -6,12 +6,14 @@ import type { NavItem, SyncStatus } from "../../types";
 interface Props {
   navItems: NavItem[];
   syncStatus: SyncStatus;
+  currentPath?: string;
   children: React.ReactNode;
 }
 
 export default function DashboardShell({
   navItems,
   syncStatus,
+  currentPath,
   children,
 }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,6 +40,7 @@ export default function DashboardShell({
         onClose={closeSidebar}
         navItems={navItems}
         syncStatus={syncStatus}
+        currentPath={currentPath}
       />
       <div className="lg:pl-64 flex flex-col min-h-screen">
         <Topbar onMenuToggle={toggleSidebar} />

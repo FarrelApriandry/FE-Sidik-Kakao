@@ -10,11 +10,11 @@ import type {
 } from "../types";
 
 export const MOCK_NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", icon: "space_dashboard", href: "#", isActive: true },
-  { label: "Data Petani", icon: "group", href: "#", isActive: false },
-  { label: "Rekap Panen", icon: "inventory", href: "#", isActive: false },
-  { label: "Ketertelusuran", icon: "qr_code_scanner", href: "#", isActive: false },
-  { label: "AI Insight", icon: "psychology", href: "#", isActive: false },
+  { label: "Dashboard", icon: "space_dashboard", href: "/dashboard" },
+  { label: "Data Petani", icon: "group", href: "/dashboard/petani" },
+  { label: "Rekap Panen", icon: "inventory", href: "/dashboard/rekap" },
+  { label: "Ketertelusuran", icon: "qr_code_scanner", href: "/dashboard/ketertelusuran" },
+  { label: "AI Insight", icon: "psychology", href: "/dashboard/ai-insight" },
 ];
 
 export const MOCK_SYNC_STATUS: SyncStatus = {
@@ -103,6 +103,7 @@ export const MOCK_HARVEST_BATCHES: HarvestBatch[] = [
     weight: "185 Kg",
     grade: "A",
     moisture: "8.5% (Perlu Jemur)",
+    moisturePct: 8.5,
     moistureStatus: "perlu-jemur",
     totalValue: "Rp 9.250.000",
     status: "terverifikasi",
@@ -115,6 +116,7 @@ export const MOCK_HARVEST_BATCHES: HarvestBatch[] = [
     weight: "210 Kg",
     grade: "A",
     moisture: "7.1% (Optimal)",
+    moisturePct: 7.1,
     moistureStatus: "optimal",
     totalValue: "Rp 10.500.000",
     status: "terverifikasi",
@@ -127,6 +129,7 @@ export const MOCK_HARVEST_BATCHES: HarvestBatch[] = [
     weight: "95 Kg",
     grade: "B",
     moisture: "10.2% (Perlu Jemur)",
+    moisturePct: 10.2,
     moistureStatus: "perlu-jemur",
     totalValue: "Rp 4.560.000",
     status: "curing",

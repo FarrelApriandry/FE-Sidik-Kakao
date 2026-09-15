@@ -7,6 +7,8 @@ import StatusBadge from "./StatusBadge";
 
 interface Props {
   batches: HarvestBatch[];
+  onDetailClick?: (batch: HarvestBatch) => void;
+  refreshKey?: number;
 }
 
 function GradeBadge({ grade }: { grade: Grade }) {
@@ -25,32 +27,40 @@ function GradeBadge({ grade }: { grade: Grade }) {
   );
 }
 
-export default function HarvestTable({ batches }: Props) {
+export default function HarvestTable({ batches, onDetailClick, refreshKey }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [allBatches, setAllBatches] = useState<HarvestBatch[]>(batches);
 
   useEffect(() => {
     const stored = getHarvests();
-    if (stored.length === 0) return;
+    if (stored.length === 0) {
+      setAllBatches(batches);
+      return;
+    }
 
-    const localBatches: HarvestBatch[] = stored.map((r: HarvestRecord) => ({
-      id: r.id,
-      farmerName: r.farmerName,
-      timestamp: r.dateFormatted,
-      weight: `${r.weightKg} Kg`,
-      grade: r.grade as Grade,
-      moisture: "—",
-      moistureStatus: "optimal" as const,
-      totalValue: `Rp ${r.totalValue.toLocaleString("id-ID")}`,
-      status: r.status === "Terverifikasi" ? "terverifikasi" as const : "curing" as const,
-      actionLabel: "Cetak Label",
-    }));
+    const localBatches: HarvestBatch[] = stored.map((r: HarvestRecord) => {
+      const mPct = r.moisturePct;
+      const mStatus: "optimal" | "perlu-jemur" =
+        mPct !== undefined && mPct > 8.5 ? "perlu-jemur" : "optimal";
+      return {
+        id: r.id,
+        farmerName: r.farmerName,
+        timestamp: r.dateFormatted,
+        weight: `${r.weightKg} Kg`,
+        grade: r.grade as Grade,
+        moisture: mPct !== undefined ? `${mPct}%` : "—",
+        moisturePct: mPct,
+        moistureStatus: mStatus,
+        totalValue: `Rp ${r.totalValue.toLocaleString("id-ID")}`,
+        status: r.status === "Terverifikasi" ? "terverifikasi" as const : "curing" as const,
+        actionLabel: "Cetak Label",
+      };
+    });
 
-    // Prepend local entries, filtering out any mock duplicates
     const mockIds = new Set(batches.map((b) => b.id));
     const filtered = localBatches.filter((b) => !mockIds.has(b.id));
     setAllBatches([...filtered, ...batches]);
-  }, [batches]);
+  }, [batches, refreshKey]);
 
   const filteredBatches = allBatches.filter((b) =>
     b.farmerName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -157,15 +167,13 @@ export default function HarvestTable({ batches }: Props) {
 
                 {/* Aksi */}
                 <td className="py-3.5 px-4 text-right">
-                  {batch.actionLabel === "Cetak Label" ? (
-                    <Button variant="primary" size="sm">
-                      Cetak Label
-                    </Button>
-                  ) : (
-                    <Button variant="secondary" size="sm">
-                      Detail
-                    </Button>
-                  )}
+                  <Button
+                    variant={batch.actionLabel === "Cetak Label" ? "primary" : "secondary"}
+                    size="sm"
+                    onClick={() => onDetailClick?.(batch)}
+                  >
+                    {batch.actionLabel === "Cetak Label" ? "Cetak Label" : "Detail"}
+                  </Button>
                 </td>
               </tr>
             ))}
