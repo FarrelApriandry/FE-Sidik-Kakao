@@ -9,6 +9,7 @@ import {
   type HarvestRecord,
 } from "../../utils/storage";
 import { QrCodeSvg } from "../../utils/qr";
+import BottomNav from "./BottomNav";
 
 /* ── Category Config ── */
 const CATEGORIES: { key: BeanCategory; label: string; icon: string }[] = [
@@ -113,7 +114,7 @@ export default function CatatForm() {
     <div className="w-full max-w-[430px] mx-auto min-h-screen bg-slate-50 flex flex-col">
       <CatatHeader />
 
-      <main className="flex-1 overflow-y-auto pb-8 px-4 pt-4 space-y-6">
+      <main className="flex-1 overflow-y-auto pb-20 px-4 pt-4 space-y-6">
         <StepIndicator
           currentStep={aiResult ? 3 : photoDataUrl ? 2 : parsedWeight > 0 ? 1 : 1}
         />
@@ -169,6 +170,8 @@ export default function CatatForm() {
           )}
         </section>
       </main>
+
+      <BottomNav activeIndex={1} />
 
       {showQrModal && savedRecord && (
         <QrModal

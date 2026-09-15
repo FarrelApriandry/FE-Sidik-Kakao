@@ -130,7 +130,7 @@ export default function LoginForm() {
 
       {/* Footer */}
       <p className="text-center text-xs text-slate-400 mt-6">
-        © 2024 SIDIK-KAKAO • Ketertelusuran Kakao Indonesia
+        © 2026 SIDIK-KAKAO • Ketertelusuran Kakao Indonesia
       </p>
     </div>
   );

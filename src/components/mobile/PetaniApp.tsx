@@ -40,9 +40,9 @@ interface HarvestLog {
 }
 
 const RECENT_LOGS: HarvestLog[] = [
-  { id: "BTH-KK-091", date: "12 Okt 2024", weight: "85 Kg", grade: "Grade A", status: "terverifikasi" },
-  { id: "BTH-KK-090", date: "10 Okt 2024", weight: "72 Kg", grade: "Grade A", status: "terverifikasi" },
-  { id: "BTH-KK-089", date: "08 Okt 2024", weight: "95 Kg", grade: "Grade B", status: "curing" },
+  { id: "BTH-KK-091", date: "12 Okt 2026", weight: "85 Kg", grade: "Grade A", status: "terverifikasi" },
+  { id: "BTH-KK-090", date: "10 Okt 2026", weight: "72 Kg", grade: "Grade A", status: "terverifikasi" },
+  { id: "BTH-KK-089", date: "08 Okt 2026", weight: "95 Kg", grade: "Grade B", status: "curing" },
 ];
 
 const STATUS_CFG: Record<LogStatus, { bg: string; text: string; icon: string; label: string }> = {

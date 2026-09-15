@@ -10,7 +10,7 @@ interface Props {
 
 export default function Topbar({
   onMenuToggle,
-  season = "Musim Utama 2024",
+  season = "Musim Utama 2026",
   userName = "Admin Poktan",
   userRegion = "Luwu Utara",
 }: Props) {
