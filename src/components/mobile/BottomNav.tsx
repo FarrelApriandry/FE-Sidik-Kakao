@@ -10,9 +10,10 @@ const NAV_ITEMS = [
 
 interface BottomNavProps {
   activeIndex: number;
+  onNav?: (url: string) => void;
 }
 
-export default function BottomNav({ activeIndex }: BottomNavProps) {
+export default function BottomNav({ activeIndex, onNav }: BottomNavProps) {
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30">
       <div className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
@@ -20,6 +21,12 @@ export default function BottomNav({ activeIndex }: BottomNavProps) {
           <a
             key={item.label}
             href={item.href}
+            onClick={(e) => {
+              if (onNav) {
+                e.preventDefault();
+                onNav(item.href);
+              }
+            }}
             className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors ${
               i === activeIndex
                 ? "text-brand-600"

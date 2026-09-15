@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import { MOCK_GRADE_PRICES } from "../../data/mock";
 import type { BeanCategory, CacaoGrade, AiAnalysisResult } from "../../types";
@@ -46,6 +46,51 @@ export default function CatatForm() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [savedRecord, setSavedRecord] = useState<HarvestRecord | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /* ── Unsaved Changes Guard ── */
+  const isDirty = weightKg.trim() !== "" || photoDataUrl !== null;
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+
+  const handleNav = useCallback(
+    (targetUrl: string) => {
+      if (isDirty) {
+        setPendingUrl(targetUrl);
+        setShowExitModal(true);
+      } else {
+        window.location.href = targetUrl;
+      }
+    },
+    [isDirty]
+  );
+
+  /* Trap hardware / browser back button when form is dirty */
+  useEffect(() => {
+    if (!isDirty) return;
+
+    // Push a dummy state so the next popstate is ours to intercept
+    window.history.pushState(null, "", window.location.href);
+
+    const onPopState = () => {
+      // Re-push so the user doesn't actually leave
+      window.history.pushState(null, "", window.location.href);
+      setPendingUrl("/petani");
+      setShowExitModal(true);
+    };
+
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("popstate", onPopState);
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [isDirty]);
 
   /* Valuation (reactive) */
   const parsedWeight = parseFloat(weightKg) || 0;
@@ -112,7 +157,7 @@ export default function CatatForm() {
 
   return (
     <div className="w-full max-w-[430px] mx-auto min-h-screen bg-slate-50 flex flex-col">
-      <CatatHeader />
+      <CatatHeader onBack={() => handleNav("/petani")} />
 
       <main className="flex-1 overflow-y-auto pb-20 px-4 pt-4 space-y-6">
         <StepIndicator
@@ -171,12 +216,25 @@ export default function CatatForm() {
         </section>
       </main>
 
-      <BottomNav activeIndex={1} />
+      <BottomNav activeIndex={1} onNav={handleNav} />
 
       {showQrModal && savedRecord && (
         <QrModal
           record={savedRecord}
           onClose={() => setShowQrModal(false)}
+        />
+      )}
+
+      {showExitModal && (
+        <ExitConfirmModal
+          onContinue={() => {
+            setShowExitModal(false);
+            setPendingUrl(null);
+          }}
+          onExit={() => {
+            setShowExitModal(false);
+            if (pendingUrl) window.location.href = pendingUrl;
+          }}
         />
       )}
     </div>
@@ -188,15 +246,15 @@ export default function CatatForm() {
    ══════════════════════════════════════════════ */
 
 /* ── Catat Header ── */
-function CatatHeader() {
+function CatatHeader({ onBack }: { onBack: () => void }) {
   return (
     <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 flex items-center gap-3">
-      <a
-        href="/petani"
+      <button
+        onClick={onBack}
         className="h-9 w-9 -ml-1 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
       >
         <MaterialIcon name="arrow_back" size={22} />
-      </a>
+      </button>
       <div className="flex-1">
         <h1 className="font-display font-bold text-base text-slate-900 tracking-tight">
           Catat Hasil Panen Baru
@@ -636,6 +694,60 @@ function QrModal({
             className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
           >
             Selesai &amp; Kembali ke Beranda
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Exit Confirm Modal ── */
+function ExitConfirmModal({
+  onContinue,
+  onExit,
+}: {
+  onContinue: () => void;
+  onExit: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onContinue}
+    >
+      <div
+        className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        style={{ animation: "modalSlideUp 0.3s ease-out" }}
+      >
+        {/* Header */}
+        <div className="bg-amber-50 px-6 pt-6 pb-4 text-center">
+          <div className="h-14 w-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-amber-500/30">
+            <MaterialIcon name="warning" size={32} />
+          </div>
+          <h2 className="font-display font-bold text-lg text-amber-900 mt-3">
+            Belum Selesai Dicatat, Pak/Bu!
+          </h2>
+          <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+            Catatan panen yang sudah diketik akan hilang kalau Bapak/Ibu keluar
+            sekarang. Yakin mau membatalkan?
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="px-6 py-5 space-y-2.5">
+          <button
+            onClick={onContinue}
+            className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white font-display font-bold text-sm rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <MaterialIcon name="edit_note" size={20} className="text-white" />
+            Lanjutkan Mengisi Panen
+          </button>
+          <button
+            onClick={onExit}
+            className="w-full h-11 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 font-semibold text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <MaterialIcon name="logout" size={18} />
+            Keluar &amp; Hapus Isian
           </button>
         </div>
       </div>
