@@ -9,7 +9,7 @@ import {
 } from "../../data/faqData";
 
 /* ══════════════════════════════════════════════
-   Main Component
+   Main Component: BantuanPage
    ══════════════════════════════════════════════ */
 export default function BantuanPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,10 +64,10 @@ export default function BantuanPage() {
         </a>
         <div className="flex-1">
           <h1 className="font-display font-bold text-base text-slate-900 tracking-tight">
-            Bantuan &amp; FAQ
+            Pusat Bantuan Petani
           </h1>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Panduan penggunaan aplikasi SIDIK-KAKAO
+            Petunjuk mudah pakai aplikasi SIDIK-KAKAO
           </p>
         </div>
       </header>
@@ -76,7 +76,7 @@ export default function BantuanPage() {
       <main className="flex-1 overflow-y-auto px-4 pt-4 pb-6 space-y-4">
         {/* Search */}
         <SearchInput
-          placeholder="Cari pertanyaan..."
+          placeholder="Ketik pertanyaan di sini..."
           value={searchQuery}
           onChange={setSearchQuery}
         />
@@ -183,11 +183,10 @@ function EmptySearchState() {
         <MaterialIcon name="search_off" size={28} className="text-slate-300" />
       </div>
       <h3 className="font-display font-bold text-sm text-slate-700 mb-1">
-        Tidak Ditemukan
+        Pertanyaan Tidak Ditemukan
       </h3>
-      <p className="text-xs text-slate-400 max-w-[220px]">
-        Coba kata kunci lain atau ubah filter kategori untuk menemukan jawaban
-        yang Anda cari.
+      <p className="text-xs text-slate-400 max-w-[240px]">
+        Coba ketik kata kunci lain atau pilih kategori di atas untuk menemukan petunjuk.
       </p>
     </div>
   );
@@ -197,9 +196,8 @@ function EmptySearchState() {
 function SupportCtaCard() {
   const handleWhatsApp = useCallback(() => {
     if (navigator.vibrate) navigator.vibrate(50);
-    /* Demo: In production, replace with real WhatsApp deep link */
     window.open(
-      "https://wa.me/6281234567890?text=Halo%20Admin%2C%20saya%20butuh%20bantuan%20aplikasi%20SIDIK-KAKAO",
+      "https://wa.me/6281234567890?text=Halo%20Pengurus%20Poktan%2C%20saya%20butuh%20bantuan%20aplikasi%20SIDIK-KAKAO",
       "_blank"
     );
   }, []);
@@ -213,10 +211,10 @@ function SupportCtaCard() {
         </div>
         <div>
           <h3 className="font-display font-bold text-sm text-slate-900">
-            Butuh Bantuan Lebih?
+            Tanya Langsung ke Pengurus Poktan
           </h3>
           <p className="text-[11px] text-slate-600 mt-0.5">
-            Hubungi Admin Poktan untuk bantuan langsung
+            Ada kendala atau bingung? Hubungi admin via WhatsApp
           </p>
         </div>
       </div>
@@ -231,7 +229,7 @@ function SupportCtaCard() {
           />
           <div className="flex-1">
             <span className="text-[11px] text-slate-500 block">
-              Jam Operasional
+              Jam Pelayanan
             </span>
             <span className="text-xs font-semibold text-slate-800">
               Senin–Sabtu, 08:00–16:00 WITA
@@ -246,7 +244,7 @@ function SupportCtaCard() {
           />
           <div className="flex-1">
             <span className="text-[11px] text-slate-500 block">
-              Admin Poktan
+              Pengurus Pos Poktan
             </span>
             <span className="text-xs font-semibold text-slate-800">
               Pak Ahmad (Poktan Harapan Jaya)
@@ -261,7 +259,7 @@ function SupportCtaCard() {
         className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white font-display font-bold text-sm rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
       >
         <MaterialIcon name="chat" size={20} className="text-white" />
-        Hubungi Admin via WhatsApp
+        Chat WhatsApp Pengurus Poktan
       </button>
     </div>
   );
