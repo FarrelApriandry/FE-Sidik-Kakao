@@ -720,14 +720,14 @@ function ExitConfirmModal({
         style={{ animation: "modalSlideUp 0.3s ease-out" }}
       >
         {/* Header */}
-        <div className="bg-amber-50 px-6 pt-6 pb-4 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-amber-500/30">
+        <div className="bg-emerald-50 px-6 pt-6 pb-4 text-center">
+          <div className="h-14 w-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
             <MaterialIcon name="warning" size={32} />
           </div>
-          <h2 className="font-display font-bold text-lg text-amber-900 mt-3">
+          <h2 className="font-display font-bold text-lg text-emerald-900 mt-3">
             Belum Selesai Dicatat, Pak/Bu!
           </h2>
-          <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+          <p className="text-xs text-brand-700 mt-1 leading-relaxed">
             Catatan panen yang sudah diketik akan hilang kalau Bapak/Ibu keluar
             sekarang. Yakin mau membatalkan?
           </p>
