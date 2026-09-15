@@ -295,7 +295,7 @@ function SystemActions({ onSync, onLogout, isSyncing }: SystemActionsProps) {
 
       {/* FAQ */}
       <a
-        href="#"
+        href="/petani/bantuan"
         className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors border-t border-slate-100"
       >
         <div className="h-9 w-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
