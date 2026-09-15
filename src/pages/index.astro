@@ -1,30 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import DashboardShell from '../components/layout/DashboardShell';
-import DashboardContent from '../components/dashboard/DashboardContent';
-import {
-  MOCK_NAV_ITEMS,
-  MOCK_SYNC_STATUS,
-  MOCK_KPI_METRICS,
-  MOCK_WEATHER_ALERT,
-  MOCK_TREND_DATA,
-  MOCK_QUALITY_SEGMENTS,
-  MOCK_HARVEST_BATCHES,
-} from '../data/mock';
+import LoginForm from '../components/auth/LoginForm';
 ---
 
-<Layout>
-  <DashboardShell
-    client:load
-    navItems={MOCK_NAV_ITEMS}
-    syncStatus={MOCK_SYNC_STATUS}
-  >
-    <DashboardContent
-      metrics={MOCK_KPI_METRICS}
-      weatherAlert={MOCK_WEATHER_ALERT}
-      trendData={MOCK_TREND_DATA}
-      qualitySegments={MOCK_QUALITY_SEGMENTS}
-      harvestBatches={MOCK_HARVEST_BATCHES}
-    />
-  </DashboardShell>
+<Layout title="SIDIK-KAKAO • Masuk">
+  <div class="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-brand-50 via-slate-50 to-cacao-500/5">
+    <LoginForm client:load />
+  </div>
 </Layout>

@@ -78,3 +78,46 @@ export interface SyncStatus {
   label: string;
   sublabel: string;
 }
+
+// ── Catat Hasil Panen Types ──
+
+/** Bean moisture/processing category */
+export type BeanCategory = "basah" | "fermentasi" | "kering";
+
+/** SNI-aligned cocoa grade */
+export type CacaoGrade = "A" | "B";
+
+/** Full state shape for the harvest entry form */
+export interface HarvestInputState {
+  /** Harvest weight in kilograms (stored as string for input control, parsed to number for calc) */
+  weightKg: string;
+  /** Selected bean category pill */
+  category: BeanCategory;
+  /** Captured photo as a base64 data-URL string, or null if not yet captured */
+  photoDataUrl: string | null;
+  /** Whether AI analysis is currently running */
+  isAnalyzing: boolean;
+  /** AI result object, null until analysis completes */
+  aiResult: AiAnalysisResult | null;
+}
+
+/** Simulated AI computer-vision analysis output */
+export interface AiAnalysisResult {
+  /** Detected grade */
+  grade: CacaoGrade;
+  /** Grade display label, e.g. "Grade A (SNI)" */
+  gradeLabel: string;
+  /** Fungal detection status */
+  fungalStatus: "Bebas Jamur" | "Terdeteksi Jamur";
+  /** Whether fungal was detected (for styling) */
+  hasFungalRisk: boolean;
+  /** Model confidence 0–100 */
+  confidence: number;
+}
+
+/** Price lookup entry for valuation */
+export interface GradePriceEntry {
+  grade: CacaoGrade;
+  category: BeanCategory;
+  pricePerKg: number;
+}

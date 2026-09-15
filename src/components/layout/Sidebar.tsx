@@ -28,7 +28,7 @@ export default function Sidebar({
           {/* Brand & Poktan Info */}
           <div className="flex items-center gap-3 pt-1">
             <div className="h-9 w-9 rounded-xl bg-brand-600 flex items-center justify-center text-white font-display font-bold text-lg shadow-sm">
-              <img src="../../../public/Ico.png" alt="Logo" className="h-8 w-8" />
+              <img src="/Ico.png" alt="Logo" className="h-8 w-8" />
             </div>
             <div className="flex flex-col">
               <span className="font-display font-bold text-base text-slate-900 tracking-tight leading-none">

@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import DashboardShell from '../components/layout/DashboardShell';
+import DashboardContent from '../components/dashboard/DashboardContent';
+import {
+  MOCK_NAV_ITEMS,
+  MOCK_SYNC_STATUS,
+  MOCK_KPI_METRICS,
+  MOCK_WEATHER_ALERT,
+  MOCK_TREND_DATA,
+  MOCK_QUALITY_SEGMENTS,
+  MOCK_HARVEST_BATCHES,
+} from '../data/mock';
+---
+
+<Layout title="SIDIK-KAKAO Dashboard Poktan">
+  <DashboardShell
+    client:load
+    navItems={MOCK_NAV_ITEMS}
+    syncStatus={MOCK_SYNC_STATUS}
+  >
+    <DashboardContent
+      metrics={MOCK_KPI_METRICS}
+      weatherAlert={MOCK_WEATHER_ALERT}
+      trendData={MOCK_TREND_DATA}
+      qualitySegments={MOCK_QUALITY_SEGMENTS}
+      harvestBatches={MOCK_HARVEST_BATCHES}
+    />
+  </DashboardShell>
+</Layout>

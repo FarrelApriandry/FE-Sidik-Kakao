@@ -6,6 +6,7 @@ import type {
   QualitySegment,
   HarvestBatch,
   SyncStatus,
+  GradePriceEntry,
 } from "../types";
 
 export const MOCK_NAV_ITEMS: NavItem[] = [
@@ -131,4 +132,13 @@ export const MOCK_HARVEST_BATCHES: HarvestBatch[] = [
     status: "curing",
     actionLabel: "Detail",
   },
+];
+
+export const MOCK_GRADE_PRICES: GradePriceEntry[] = [
+  { grade: "A", category: "basah", pricePerKg: 28_000 },
+  { grade: "A", category: "fermentasi", pricePerKg: 42_000 },
+  { grade: "A", category: "kering", pricePerKg: 55_000 },
+  { grade: "B", category: "basah", pricePerKg: 20_000 },
+  { grade: "B", category: "fermentasi", pricePerKg: 32_000 },
+  { grade: "B", category: "kering", pricePerKg: 40_000 },
 ];
