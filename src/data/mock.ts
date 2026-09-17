@@ -4,9 +4,7 @@ import type {
   WeatherAlert,
   TrendDataPoint,
   QualitySegment,
-  HarvestBatch,
   SyncStatus,
-  GradePriceEntry,
 } from "../types";
 
 export const MOCK_NAV_ITEMS: NavItem[] = [
@@ -93,55 +91,4 @@ export const MOCK_QUALITY_SEGMENTS: QualitySegment[] = [
     weight: "1,0 Ton",
     color: "#ef4444",
   },
-];
-
-export const MOCK_HARVEST_BATCHES: HarvestBatch[] = [
-  {
-    id: "BTH-KK-089",
-    farmerName: "Ahmad Fauzi",
-    timestamp: "24 Okt, 15:30",
-    weight: "185 Kg",
-    grade: "A",
-    moisture: "8.5% (Perlu Jemur)",
-    moisturePct: 8.5,
-    moistureStatus: "perlu-jemur",
-    totalValue: "Rp 9.250.000",
-    status: "terverifikasi",
-    actionLabel: "Cetak Label",
-  },
-  {
-    id: "BTH-KK-088",
-    farmerName: "Joko Warsito",
-    timestamp: "24 Okt, 14:15",
-    weight: "210 Kg",
-    grade: "A",
-    moisture: "7.1% (Optimal)",
-    moisturePct: 7.1,
-    moistureStatus: "optimal",
-    totalValue: "Rp 10.500.000",
-    status: "terverifikasi",
-    actionLabel: "Detail",
-  },
-  {
-    id: "BTH-KK-087",
-    farmerName: "Siti Rohmah",
-    timestamp: "24 Okt, 11:00",
-    weight: "95 Kg",
-    grade: "B",
-    moisture: "10.2% (Perlu Jemur)",
-    moisturePct: 10.2,
-    moistureStatus: "perlu-jemur",
-    totalValue: "Rp 4.560.000",
-    status: "curing",
-    actionLabel: "Detail",
-  },
-];
-
-export const MOCK_GRADE_PRICES: GradePriceEntry[] = [
-  { grade: "A", category: "basah", pricePerKg: 28_000 },
-  { grade: "A", category: "fermentasi", pricePerKg: 42_000 },
-  { grade: "A", category: "kering", pricePerKg: 55_000 },
-  { grade: "B", category: "basah", pricePerKg: 20_000 },
-  { grade: "B", category: "fermentasi", pricePerKg: 32_000 },
-  { grade: "B", category: "kering", pricePerKg: 40_000 },
 ];

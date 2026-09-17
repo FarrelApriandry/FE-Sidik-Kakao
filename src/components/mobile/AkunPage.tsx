@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import BottomNav from "./BottomNav";
-import { getHarvests } from "../../utils/storage";
+import { fetchHarvests, syncPendingRecords, logoutUser, getHarvests } from "../../utils/storage";
 
 /* ── Profile Data ── */
 const PROFILE = {
@@ -24,9 +24,11 @@ export default function AkunPage() {
 
   /* Load local record count */
   useEffect(() => {
-    const count = getHarvests().length;
-    setLocalCount(count);
-    setPendingQueue(count);
+    fetchHarvests().then((records) => {
+      setLocalCount(records.length);
+      const pending = records.filter((r) => r.syncStatus === "pending" || r.syncStatus === "error").length;
+      setPendingQueue(pending);
+    });
   }, []);
 
   /* Connectivity listeners */
@@ -45,24 +47,26 @@ export default function AkunPage() {
     };
   }, []);
 
-  /* Sync simulation */
-  const handleSync = useCallback(() => {
+  /* Real sync handler */
+  const handleSync = useCallback(async () => {
     if (isSyncing) return;
     setIsSyncing(true);
     setSyncSuccess(false);
-
-    setTimeout(() => {
-      setPendingQueue(0);
+    try {
+      const result = await syncPendingRecords();
+      setPendingQueue(result.failed);
+      setSyncSuccess(result.synced > 0);
+      if (result.synced > 0) setTimeout(() => setSyncSuccess(false), 3000);
+    } catch {
+      // silent
+    } finally {
       setIsSyncing(false);
-      setSyncSuccess(true);
-
-      // Hide success message after 3s
-      setTimeout(() => setSyncSuccess(false), 3000);
-    }, 2000);
+    }
   }, [isSyncing]);
 
   /* Logout */
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    await logoutUser();
     sessionStorage.removeItem("role");
     window.location.href = "/";
   }, []);

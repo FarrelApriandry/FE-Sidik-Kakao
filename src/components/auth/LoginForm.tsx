@@ -1,5 +1,6 @@
 import { useState } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
+import { getSupabase } from "../../lib/supabase";
 
 type Role = "admin" | "petani";
 
@@ -7,10 +8,38 @@ export default function LoginForm() {
   const [role, setRole] = useState<Role>("admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDemoLogin = (selectedRole: Role) => {
-    sessionStorage.setItem("role", selectedRole);
-    window.location.href = selectedRole === "admin" ? "/dashboard" : "/petani";
+  const handleLogin = async (selectedRole: Role) => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const supabase = getSupabase();
+      const loginEmail = email.trim() || (selectedRole === "admin" ? "admin@poktan.id" : "budi@petani.id");
+      const loginPassword = password.trim() || "password123";
+
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (authError) {
+        setError(authError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      const userRole = data.user?.user_metadata?.role ?? selectedRole;
+      sessionStorage.setItem("role", userRole);
+      window.location.href = userRole === "admin" ? "/dashboard" : "/petani";
+    } catch (e) {
+      setError("Gagal terhubung ke server. Menggunakan mode demo.");
+      sessionStorage.setItem("role", selectedRole);
+      window.location.href = selectedRole === "admin" ? "/dashboard" : "/petani";
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -94,13 +123,25 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* Login Button (visual) */}
+        {/* Login Button */}
         <button
-          onClick={() => handleDemoLogin(role)}
-          className="w-full h-11 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-sm hover:shadow transition-all active:scale-[0.98]"
+          onClick={() => handleLogin(role)}
+          disabled={isLoading}
+          className="w-full h-11 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-400 text-white font-semibold rounded-xl shadow-sm hover:shadow transition-all active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          Masuk
+          {isLoading ? (
+            <>
+              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Memproses...
+            </>
+          ) : "Masuk"}
         </button>
+
+        {error && (
+          <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
 
         {/* Divider */}
         <div className="flex items-center gap-3">
@@ -112,14 +153,14 @@ export default function LoginForm() {
         {/* 1-Click Demo Buttons */}
         <div className="space-y-3">
           <button
-            onClick={() => handleDemoLogin("admin")}
+            onClick={() => handleLogin("admin")}
             className="w-full h-11 flex items-center justify-center gap-2 bg-brand-50 border border-brand-600/20 text-brand-700 font-semibold rounded-xl hover:bg-brand-100 transition-all active:scale-[0.98]"
           >
             <MaterialIcon name="space_dashboard" size={20} />
             Masuk sebagai Admin Poktan
           </button>
           <button
-            onClick={() => handleDemoLogin("petani")}
+            onClick={() => handleLogin("petani")}
             className="w-full h-11 flex items-center justify-center gap-2 bg-cacao-500/10 border border-cacao-500/20 text-cacao-700 font-semibold rounded-xl hover:bg-cacao-500/20 transition-all active:scale-[0.98]"
           >
             <MaterialIcon name="agriculture" size={20} />

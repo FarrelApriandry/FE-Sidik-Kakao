@@ -181,6 +181,41 @@ export async function fetchGradePrices(): Promise<GradePriceEntry[]> {
 }
 
 /* ─────────────────────────────────────────────
+   Auth / Profile
+   ───────────────────────────────────────────── */
+export interface UserProfile {
+  id: string;
+  role: "admin" | "petani";
+  fullName: string;
+  poktanId?: string;
+}
+
+export async function fetchProfile(): Promise<UserProfile | null> {
+  try {
+    const supabase = getSupabase();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return null;
+    return {
+      id: user.id,
+      role: (user.user_metadata?.role as "admin" | "petani") ?? "petani",
+      fullName: (user.user_metadata?.full_name as string) ?? "Unknown",
+      poktanId: user.user_metadata?.poktan_id as string | undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function logoutUser(): Promise<void> {
+  try {
+    const supabase = getSupabase();
+    await supabase.auth.signOut();
+  } catch {
+    // silent
+  }
+}
+
+/* ─────────────────────────────────────────────
    READ PATH — fetchHarvests (hybrid)
    ───────────────────────────────────────────── */
 export async function fetchHarvests(
