@@ -80,6 +80,112 @@ export interface SyncStatus {
   sublabel: string;
 }
 
+// ── Dashboard Query Result Types ──
+
+/** Aggregated KPI metrics fetched from harvest_batches */
+export interface DashboardKPI {
+  totalKg: number;
+  activeFarmers: number;
+  totalPetani: number;
+  avgPrice: number;
+  totalBatches: number;
+  verifiedBatches: number;
+}
+
+/** Monthly trend data point for chart */
+export interface MonthlyTrend {
+  month: string;       // e.g. "Mei"
+  monthDate: string;   // ISO date of month start
+  volume: number;      // in tons
+  price: number;       // avg price per kg
+}
+
+/** Grade distribution for donut chart */
+export interface GradeDistribution {
+  grade: string;
+  totalWeight: number;
+  batchCount: number;
+}
+
+/** Farmer profile with aggregated deposit */
+export interface FarmerWithDeposit {
+  id: string;
+  fullName: string;
+  phoneNumber: string | null;
+  estateAreaHa: number | null;
+  totalDepositKg: number;
+}
+
+/** Monthly rekap row */
+export interface MonthlyRekapRow {
+  monthLabel: string;
+  totalKg: number;
+  batches: number;
+  gradeAPct: number;
+  value: number;
+}
+
+/** Rekap summary cards */
+export interface RekapSummary {
+  totalKg: number;
+  avgPerBatch: number;
+  totalBatches: number;
+  verifiedBatches: number;
+  totalValue: number;
+}
+
+/** Harvest batch with joined farmer profile */
+export interface BatchWithProfile {
+  id: string;
+  weightKg: number;
+  grade: string;
+  gradeLabel: string;
+  moisturePct: number | null;
+  fungalStatus: string;
+  pricePerKg: number;
+  totalValue: number;
+  status: string;
+  qrPayload: unknown;
+  createdAt: string;
+  farmerName: string;
+  farmerId: string;
+}
+
+/** Ketertelusuran batch detail with supply chain info */
+export interface BatchTraceDetail {
+  id: string;
+  weightKg: number;
+  grade: string;
+  gradeLabel: string;
+  moisturePct: number | null;
+  fungalStatus: string;
+  pricePerKg: number;
+  totalValue: number;
+  status: string;
+  qrPayload: unknown;
+  createdAt: string;
+  farmerName: string;
+  poktanName: string;
+  poktanLocation: string;
+}
+
+/** Moisture analytics computed from real data */
+export interface MoistureStats {
+  avgMoisture: number;
+  highMoistureCount: number;
+  totalSamples: number;
+  riskPct: number;
+  recentMoisture: number[];
+}
+
+/** Forecast data point */
+export interface ForecastPoint {
+  month: string;
+  predicted: string;
+  confidence: string;
+  direction: "up" | "down";
+}
+
 // ── Catat Hasil Panen Types ──
 
 /** Bean moisture/processing category */

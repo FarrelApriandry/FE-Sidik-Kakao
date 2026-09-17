@@ -3,16 +3,14 @@ import SearchInput from "../ui/SearchInput";
 
 interface Props {
   onMenuToggle: () => void;
-  season?: string;
   userName?: string;
-  userRegion?: string;
+  poktanName?: string;
 }
 
 export default function Topbar({
   onMenuToggle,
-  season = "Musim Utama 2026",
   userName = "Admin Poktan",
-  userRegion = "Luwu Utara",
+  poktanName,
 }: Props) {
   return (
     <header className="sticky top-0 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 z-30 px-4 lg:px-8 flex items-center justify-between">
@@ -40,7 +38,7 @@ export default function Topbar({
             size={16}
             className="text-cacao-500"
           />
-          <span>{season}</span>
+          <span>Musim 2026</span>
         </div>
 
         {/* Notification Bell */}
@@ -61,7 +59,7 @@ export default function Topbar({
             <span className="text-xs font-semibold text-slate-900 leading-tight">
               {userName}
             </span>
-            <span className="text-[11px] text-slate-500">{userRegion}</span>
+            <span className="text-[11px] text-slate-500">{poktanName}</span>
           </div>
           <div className="h-8 w-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center border border-brand-600/20">
             <MaterialIcon name="person" size={20} />

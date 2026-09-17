@@ -2,15 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import BottomNav from "./BottomNav";
 import { fetchHarvests, syncPendingRecords, logoutUser, getHarvests } from "../../utils/storage";
-
-/* ── Profile Data ── */
-const PROFILE = {
-  avatar: "BS",
-  name: "Pak Budi Santoso",
-  location: "Sukamaju, Luwu Utara",
-  estate: "1.5 Hektar",
-  poktan: "Poktan Harapan Jaya",
-};
+import { getCurrentUser } from "../../lib/supabase";
+import { fetchPoktanName } from "../../lib/dashboard-queries";
 
 /* ══════════════════════════════════════════════
    Main Component
@@ -21,6 +14,24 @@ export default function AkunPage() {
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
+  const [profileName, setProfileName] = useState("Memuat...");
+  const [profileAvatar, setProfileAvatar] = useState("...");
+  const [profilePoktan, setProfilePoktan] = useState("Memuat...");
+  const [profileRole, setProfileRole] = useState("petani");
+
+  /* Load user profile from Supabase */
+  useEffect(() => {
+    getCurrentUser().then((u) => {
+      if (!u) return;
+      const initials = u.fullName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+      setProfileName(u.fullName);
+      setProfileAvatar(initials);
+      setProfileRole(u.role ?? "petani");
+      if (u.poktanId) {
+        fetchPoktanName(u.poktanId).then(setProfilePoktan);
+      }
+    });
+  }, []);
 
   /* Load local record count */
   useEffect(() => {
@@ -93,7 +104,7 @@ export default function AkunPage() {
 
       <main className="flex-1 overflow-y-auto px-4 pt-4 pb-24 space-y-4">
         {/* Profile Card */}
-        <ProfileCard />
+        <ProfileCard avatar={profileAvatar} name={profileName} poktan={profilePoktan} />
 
         {/* Sync Status Card */}
         <SyncStatusCard
@@ -122,27 +133,23 @@ export default function AkunPage() {
    ══════════════════════════════════════════════ */
 
 /* ── Profile Card ── */
-function ProfileCard() {
+function ProfileCard({ avatar, name, poktan }: { avatar: string; name: string; poktan: string }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
       <div className="flex items-center gap-4">
         {/* Avatar */}
         <div className="h-16 w-16 shrink-0 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-600/20">
-          <span className="font-display font-bold text-xl">{PROFILE.avatar}</span>
+          <span className="font-display font-bold text-xl">{avatar}</span>
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <h2 className="font-display font-bold text-base text-slate-900 truncate">
-            {PROFILE.name}
+            {name}
           </h2>
           <div className="flex items-center gap-1.5 mt-1">
-            <MaterialIcon name="location_on" size={14} className="text-slate-400" />
-            <span className="text-xs text-slate-500">{PROFILE.location}</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
             <MaterialIcon name="groups" size={14} className="text-slate-400" />
-            <span className="text-xs text-slate-500">{PROFILE.poktan}</span>
+            <span className="text-xs text-slate-500">{poktan}</span>
           </div>
         </div>
       </div>
@@ -155,7 +162,7 @@ function ProfileCard() {
           </div>
           <div>
             <span className="text-[11px] text-slate-500 block">Luas Lahan</span>
-            <span className="text-sm font-bold text-slate-900">{PROFILE.estate}</span>
+            <span className="text-sm font-bold text-slate-900">-</span>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -2,13 +2,18 @@ import type { SidebarProps } from "../../types";
 import MaterialIcon from "../ui/MaterialIcon";
 import SyncStatusCard from "./SyncStatusCard";
 
+interface ExtendedSidebarProps extends SidebarProps {
+  poktanName?: string;
+}
+
 export default function Sidebar({
   isOpen,
   onClose,
   navItems,
   syncStatus,
   currentPath = "/dashboard",
-}: SidebarProps) {
+  poktanName = "Poktan",
+}: ExtendedSidebarProps) {
   const normalizedPath = currentPath.replace(/\/+$/, "") || "/dashboard";
 
   return (
@@ -38,7 +43,7 @@ export default function Sidebar({
                 SIDIK-KAKAO
               </span>
               <span className="text-xs text-slate-500 font-medium mt-1">
-                Poktan Kakao Utama
+                {poktanName}
               </span>
             </div>
           </div>

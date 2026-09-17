@@ -1,11 +1,4 @@
-import type {
-  NavItem,
-  KpiMetric,
-  WeatherAlert,
-  TrendDataPoint,
-  QualitySegment,
-  SyncStatus,
-} from "../types";
+import type { NavItem } from "../types";
 
 export const MOCK_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: "space_dashboard", href: "/dashboard" },
@@ -13,82 +6,4 @@ export const MOCK_NAV_ITEMS: NavItem[] = [
   { label: "Rekap Panen", icon: "inventory", href: "/dashboard/rekap" },
   { label: "Ketertelusuran", icon: "qr_code_scanner", href: "/dashboard/ketertelusuran" },
   { label: "AI Insight", icon: "psychology", href: "/dashboard/ai-insight" },
-];
-
-export const MOCK_SYNC_STATUS: SyncStatus = {
-  state: "online",
-  label: "Sinkron Aktif",
-  sublabel: "Offline-Ready",
-};
-
-export const MOCK_WEATHER_ALERT: WeatherAlert = {
-  source: "BMKG Luwu",
-  message:
-    "Curah hujan tinggi 5 hari ke depan. Potensi kenaikan kadar air biji",
-  highlight: "+2.5%",
-  ctaLabel: "Rekomendasi Mitigasi",
-};
-
-export const MOCK_KPI_METRICS: KpiMetric[] = [
-  {
-    label: "Total Produksi",
-    value: "12.4",
-    unit: "Ton",
-    icon: "scale",
-    iconBg: "bg-brand-50 text-brand-600",
-    trend: { direction: "up", value: "82.7% dari target", color: "emerald" },
-  },
-  {
-    label: "Petani Aktif Setor",
-    value: "48",
-    unit: "/ 50 Orang",
-    subtitle: "96% partisipasi poktan",
-    icon: "groups",
-    iconBg: "bg-slate-100 text-slate-700",
-  },
-  {
-    label: "Rata-Rata Harga",
-    value: "Rp 50.000",
-    unit: "/Kg",
-    icon: "payments",
-    iconBg: "bg-amber-50 text-cacao-500",
-    trend: {
-      direction: "up",
-      value: "+Rp 2.000 vs pasar lokal",
-      color: "emerald",
-    },
-  },
-  {
-    label: "Skor Ketertelusuran",
-    value: "98%",
-    subtitle: "47/48 Batch Terverifikasi QR",
-    icon: "qr_code_2",
-    iconBg: "bg-brand-600 text-white",
-    valueColor: "text-brand-700",
-  },
-];
-
-export const MOCK_TREND_DATA: TrendDataPoint[] = [
-  { month: "Mei", volume: 1.0, price: 38000 },
-  { month: "Jun", volume: 4.0, price: 40000 },
-  { month: "Jul", volume: 6.0, price: 44000 },
-  { month: "Ags", volume: 7.5, price: 47000 },
-  { month: "Sep", volume: 9.5, price: 49000 },
-  { month: "Okt", volume: 12.0, price: 50000 },
-];
-
-export const MOCK_QUALITY_SEGMENTS: QualitySegment[] = [
-  { label: "Grade A SNI", percentage: 68, weight: "8,4 Ton", color: "#2e6f40" },
-  {
-    label: "Grade B Fermentasi",
-    percentage: 24,
-    weight: "3,0 Ton",
-    color: "#775652",
-  },
-  {
-    label: "Non-Standard Asalan",
-    percentage: 8,
-    weight: "1,0 Ton",
-    color: "#ef4444",
-  },
 ];

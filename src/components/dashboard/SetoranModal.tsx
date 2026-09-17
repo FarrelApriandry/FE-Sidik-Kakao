@@ -9,15 +9,9 @@ import {
   fetchGradePrices,
   type HarvestRecord,
 } from "../../utils/storage";
+import { getCurrentUser } from "../../lib/supabase";
+import { fetchFarmerOptions } from "../../lib/dashboard-queries";
 import { QrCodeSvg } from "../../utils/qr";
-
-const FARMER_OPTIONS = [
-  "Ahmad Fauzi",
-  "Joko Warsito",
-  "Siti Rohmah",
-  "Budi Santoso",
-  "Dewi Lestari",
-];
 
 interface Props {
   isOpen: boolean;
@@ -27,6 +21,7 @@ interface Props {
 
 export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
   const [farmerName, setFarmerName] = useState("");
+  const [farmerOptions, setFarmerOptions] = useState<{ id: string; fullName: string }[]>([]);
   const [weightKg, setWeightKg] = useState("");
   const [moisturePct, setMoisturePct] = useState("");
   const [grade, setGrade] = useState<CacaoGrade>("A");
@@ -34,8 +29,12 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
   const [gradePrices, setGradePrices] = useState<GradePriceEntry[]>([]);
 
   useEffect(() => {
+    if (!isOpen) return;
     fetchGradePrices().then(setGradePrices);
-  }, []);
+    getCurrentUser().then((user) => {
+      if (user?.poktanId) fetchFarmerOptions(user.poktanId).then(setFarmerOptions);
+    });
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -147,8 +146,8 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600 transition-all appearance-none"
                 >
                   <option value="">Pilih nama petani...</option>
-                  {FARMER_OPTIONS.map((name) => (
-                    <option key={name} value={name}>{name}</option>
+                  {farmerOptions.map((f) => (
+                    <option key={f.id} value={f.fullName}>{f.fullName}</option>
                   ))}
                 </select>
               </div>

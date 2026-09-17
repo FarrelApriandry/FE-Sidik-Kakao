@@ -1,10 +1,10 @@
+import { useState, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import Button from "../ui/Button";
 import StatusBadge from "./StatusBadge";
 import { QrCodeSvg } from "../../utils/qr";
-import type { HarvestBatch } from "../../types";
-
-const GRADE_PRICES: Record<string, number> = { A: 55000, B: 40000 };
+import { fetchGradePrices } from "../../utils/storage";
+import type { HarvestBatch, GradePriceEntry } from "../../types";
 
 interface Props {
   batch: HarvestBatch | null;
@@ -12,10 +12,17 @@ interface Props {
 }
 
 export default function BatchDetailModal({ batch, onClose }: Props) {
+  const [gradePrices, setGradePrices] = useState<GradePriceEntry[]>([]);
+
+  useEffect(() => {
+    fetchGradePrices().then(setGradePrices);
+  }, []);
+
   if (!batch) return null;
 
   const weightNum = parseFloat(batch.weight) || 0;
-  const pricePerKg = GRADE_PRICES[batch.grade] ?? 50000;
+  const priceEntry = gradePrices.find((p) => p.grade === batch.grade && p.category === "kering");
+  const pricePerKg = priceEntry?.pricePerKg ?? (batch.grade === "A" ? 55000 : 40000);
   const valuationTotal = weightNum * pricePerKg;
 
   const moistureNum = batch.moisturePct ?? (parseFloat(batch.moisture) || 0);

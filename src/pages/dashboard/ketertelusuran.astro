@@ -2,16 +2,15 @@
 import Layout from '../../layouts/Layout.astro';
 import DashboardShell from '../../components/layout/DashboardShell';
 import KetertelusuranContent from '../../components/dashboard/KetertelusuranContent';
-import { MOCK_NAV_ITEMS, MOCK_SYNC_STATUS } from '../../data/mock';
+import { MOCK_NAV_ITEMS } from '../../data/mock';
 ---
 
 <Layout title="Ketertelusuran • SIDIK-KAKAO">
   <DashboardShell
     client:load
     navItems={MOCK_NAV_ITEMS}
-    syncStatus={MOCK_SYNC_STATUS}
     currentPath={Astro.url.pathname}
   >
-    <KetertelusuranContent />
+    <KetertelusuranContent client:load />
   </DashboardShell>
 </Layout>

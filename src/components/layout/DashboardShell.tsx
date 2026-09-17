@@ -1,27 +1,45 @@
 import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { getCurrentUser, type AppUser } from "../../lib/supabase";
+import { fetchPoktanName } from "../../lib/dashboard-queries";
 import type { NavItem, SyncStatus } from "../../types";
 
 interface Props {
   navItems: NavItem[];
-  syncStatus: SyncStatus;
   currentPath?: string;
   children: React.ReactNode;
 }
 
+const ONLINE_STATUS: SyncStatus = {
+  state: "online",
+  label: "Sinkron Aktif",
+  sublabel: "Offline-Ready",
+};
+
 export default function DashboardShell({
   navItems,
-  syncStatus,
   currentPath,
   children,
 }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [poktanName, setPoktanName] = useState("Poktan");
+  const [user, setUser] = useState<AppUser | null>(null);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
   const closeSidebar = () => setSidebarOpen(false);
 
-  // Lock body scroll when sidebar is open on mobile
+  useEffect(() => {
+    getCurrentUser().then((u) => {
+      if (u) {
+        setUser(u);
+        if (u.poktanId) {
+          fetchPoktanName(u.poktanId).then(setPoktanName);
+        }
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (sidebarOpen) {
       document.body.style.overflow = "hidden";
@@ -39,11 +57,16 @@ export default function DashboardShell({
         isOpen={sidebarOpen}
         onClose={closeSidebar}
         navItems={navItems}
-        syncStatus={syncStatus}
+        syncStatus={ONLINE_STATUS}
         currentPath={currentPath}
+        poktanName={poktanName}
       />
       <div className="lg:pl-64 flex flex-col min-h-screen">
-        <Topbar onMenuToggle={toggleSidebar} />
+        <Topbar
+          onMenuToggle={toggleSidebar}
+          userName={user?.fullName}
+          poktanName={poktanName}
+        />
         {children}
       </div>
     </>

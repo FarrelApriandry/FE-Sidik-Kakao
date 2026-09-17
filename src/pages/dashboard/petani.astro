@@ -2,16 +2,15 @@
 import Layout from '../../layouts/Layout.astro';
 import DashboardShell from '../../components/layout/DashboardShell';
 import PetaniContent from '../../components/dashboard/PetaniContent';
-import { MOCK_NAV_ITEMS, MOCK_SYNC_STATUS } from '../../data/mock';
+import { MOCK_NAV_ITEMS } from '../../data/mock';
 ---
 
 <Layout title="Data Petani • SIDIK-KAKAO">
   <DashboardShell
     client:load
     navItems={MOCK_NAV_ITEMS}
-    syncStatus={MOCK_SYNC_STATUS}
     currentPath={Astro.url.pathname}
   >
-    <PetaniContent />
+    <PetaniContent client:load />
   </DashboardShell>
 </Layout>

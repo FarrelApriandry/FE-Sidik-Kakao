@@ -143,14 +143,14 @@ export default function LoginForm() {
           </p>
         )}
 
-        {/* Divider */}
+        {/* Divider
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-slate-200" />
           <span className="text-xs text-slate-400 font-medium">Quick Demo</span>
           <div className="flex-1 h-px bg-slate-200" />
-        </div>
+        </div> */}
 
-        {/* 1-Click Demo Buttons */}
+        {/* 1-Click Demo Buttons
         <div className="space-y-3">
           <button
             onClick={() => handleLogin("admin")}
@@ -166,7 +166,7 @@ export default function LoginForm() {
             <MaterialIcon name="agriculture" size={20} />
             Masuk sebagai Petani
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Footer */}
