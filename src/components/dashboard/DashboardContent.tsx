@@ -28,6 +28,8 @@ export default function DashboardContent() {
   const [weatherAlert, setWeatherAlert] = useState<WeatherAlert | null>(null);
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
   const [qualitySegments, setQualitySegments] = useState<QualitySegment[]>([]);
+  const [qualityCenterValue, setQualityCenterValue] = useState("0%");
+  const [qualityCenterLabel, setQualityCenterLabel] = useState("Grade A SNI");
   const [harvestBatches, setHarvestBatches] = useState<HarvestBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSetoranOpen, setIsSetoranOpen] = useState(false);
@@ -76,13 +78,26 @@ export default function DashboardContent() {
 
         // Transform grade distribution
         const totalGradeWeight = grades.reduce((s, g) => s + g.totalWeight, 0);
-        const segColors = ["bg-brand-600", "bg-amber-500", "bg-slate-400"];
+        const segColors = ["#2e6f40", "#775652", "#94a3b8"];
         const qualitySegs: QualitySegment[] = grades.map((g, i) => ({
           label: g.grade,
           percentage: totalGradeWeight > 0 ? Math.round((g.totalWeight / totalGradeWeight) * 100) : 0,
           weight: `${(g.totalWeight / 1000).toFixed(1)} Ton`,
-          color: segColors[i] ?? "bg-slate-300",
+          color: segColors[i] ?? "#cbd5e1",
         }));
+
+        // Compute dynamic center value for donut chart
+        const gradeASeg = qualitySegs.find((s) => s.label === "A");
+        const dominantSeg = qualitySegs.length > 0
+          ? qualitySegs.reduce((best, seg) => seg.percentage > best.percentage ? seg : best, qualitySegs[0])
+          : null;
+        const dynCenterSeg = gradeASeg ?? dominantSeg;
+        const dynCenterValue = dynCenterSeg ? `${dynCenterSeg.percentage}%` : "0%";
+        const dynCenterLabel = qualitySegs.length === 0
+          ? "Belum ada data"
+          : gradeASeg
+            ? "Grade A SNI"
+            : `Grade ${dominantSeg?.label ?? "-"}`;
 
         // Transform batches to HarvestBatch format
         const hb: HarvestBatch[] = batches.map((b) => ({
@@ -103,6 +118,8 @@ export default function DashboardContent() {
         setWeatherAlert(alert);
         setTrendData(trendPts);
         setQualitySegments(qualitySegs);
+        setQualityCenterValue(dynCenterValue);
+        setQualityCenterLabel(dynCenterLabel);
         setHarvestBatches(hb);
       } catch (e) {
         console.error("Failed to load dashboard:", e);
@@ -153,8 +170,8 @@ export default function DashboardContent() {
         <TrendChart data={trendData} />
         <QualityDonutChart
           segments={qualitySegments}
-          centerValue="68%"
-          centerLabel="Grade A SNI"
+          centerValue={qualityCenterValue}
+          centerLabel={qualityCenterLabel}
         />
       </div>
 
