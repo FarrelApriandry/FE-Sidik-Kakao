@@ -35,12 +35,13 @@ export interface AppUser {
   id: string;
   fullName: string;
   avatar: string;
-  role: "admin" | "petani";
+  role: "admin_poktan" | "petani";
   poktanId?: string;
 }
 
 /**
  * Returns the currently authenticated Supabase user, or null if no session.
+ * Fetches role & poktan_id from the `profiles` table (source of truth).
  * Safe for client-side only (uses persisted session from localStorage).
  */
 export async function getCurrentUser(): Promise<AppUser | null> {
@@ -48,20 +49,28 @@ export async function getCurrentUser(): Promise<AppUser | null> {
     const supabase = getSupabase();
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) return null;
-    const meta = user.user_metadata ?? {};
-    const fullName: string = meta.full_name ?? "Petani";
+
+    // Fetch role + poktan_id from profiles table (source of truth)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, role, poktan_id")
+      .eq("id", user.id)
+      .single();
+
+    const fullName: string = profile?.full_name ?? user.user_metadata?.full_name ?? "Petani";
     const initials = fullName
       .split(" ")
       .map((w: string) => w[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
+
     return {
       id: user.id,
       fullName,
       avatar: initials,
-      role: (meta.role as "admin" | "petani") ?? "petani",
-      poktanId: meta.poktan_id as string | undefined,
+      role: (profile?.role as "admin_poktan" | "petani") ?? "petani",
+      poktanId: profile?.poktan_id ?? (user.user_metadata?.poktan_id as string | undefined),
     };
   } catch {
     return null;

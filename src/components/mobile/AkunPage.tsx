@@ -139,7 +139,7 @@ function ProfileCard({ avatar, name, poktan }: { avatar: string; name: string; p
       <div className="flex items-center gap-4">
         {/* Avatar */}
         <div className="h-16 w-16 shrink-0 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-600/20">
-          <span className="font-display font-bold text-xl">{avatar}</span>
+          <MaterialIcon name="person" size={30} />
         </div>
 
         {/* Info */}

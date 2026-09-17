@@ -153,7 +153,7 @@ function Header({ today, user }: { today: string; user: AppUser }) {
           Online
         </span>
         <div className="h-8 w-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center border border-brand-600/20">
-          {user.avatar}
+          <MaterialIcon name="person" size={20} />
         </div>
       </div>
     </header>
@@ -186,7 +186,7 @@ function MainContent({
         <div className="flex items-start justify-between">
           <div>
             <h2 className="font-display font-bold text-lg text-slate-900">
-              Halo, {isAuthLoading ? "…" : shortName} 👋
+              Halo, {isAuthLoading ? "…" : shortName} <MaterialIcon name="waving_hand" size={20} className="text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}/>
             </h2>
             <div className="flex items-center gap-1.5 mt-1.5">
               <MaterialIcon name="location_on" size={14} className="text-cacao-500" />

@@ -185,7 +185,7 @@ export async function fetchGradePrices(): Promise<GradePriceEntry[]> {
    ───────────────────────────────────────────── */
 export interface UserProfile {
   id: string;
-  role: "admin" | "petani";
+  role: "admin_poktan" | "petani";
   fullName: string;
   poktanId?: string;
 }
@@ -195,11 +195,18 @@ export async function fetchProfile(): Promise<UserProfile | null> {
     const supabase = getSupabase();
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) return null;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, role, poktan_id")
+      .eq("id", user.id)
+      .single();
+
     return {
       id: user.id,
-      role: (user.user_metadata?.role as "admin" | "petani") ?? "petani",
-      fullName: (user.user_metadata?.full_name as string) ?? "Unknown",
-      poktanId: user.user_metadata?.poktan_id as string | undefined,
+      role: (profile?.role as "admin_poktan" | "petani") ?? "petani",
+      fullName: profile?.full_name ?? (user.user_metadata?.full_name as string) ?? "Unknown",
+      poktanId: profile?.poktan_id ?? (user.user_metadata?.poktan_id as string | undefined),
     };
   } catch {
     return null;

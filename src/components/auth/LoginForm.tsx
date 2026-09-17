@@ -2,22 +2,20 @@ import { useState } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import { getSupabase } from "../../lib/supabase";
 
-type Role = "admin" | "petani";
-
 export default function LoginForm() {
-  const [role, setRole] = useState<Role>("admin");
+  const [role, setRole] = useState<"admin" | "petani">("admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (selectedRole: Role) => {
+  const handleLogin = async (selectedRole: "admin" | "petani") => {
     setError(null);
     setIsLoading(true);
     try {
       const supabase = getSupabase();
-      const loginEmail = email.trim() || (selectedRole === "admin" ? "admin@poktan.id" : "budi@petani.id");
-      const loginPassword = password.trim() || "password123";
+      const loginEmail = email.trim() || (selectedRole === "admin" ? "admin@sidikkakao.id" : "ahmad@sidikkakao.id");
+      const loginPassword = password.trim() || (selectedRole === "admin" ? "AdminSidik2025!" : "PetaniSidik2025!");
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: loginEmail,
@@ -30,12 +28,38 @@ export default function LoginForm() {
         return;
       }
 
-      const userRole = data.user?.user_metadata?.role ?? selectedRole;
-      sessionStorage.setItem("role", userRole);
-      window.location.href = userRole === "admin" ? "/dashboard" : "/petani";
+      // Fetch role from profiles table (source of truth)
+      let dbRole = selectedRole === "admin" ? "admin_poktan" : "petani";
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+        if (profile?.role) dbRole = profile.role;
+      }
+
+      // Role Match Validation: ensure UI selection matches DB role
+      const expectedDbRole = selectedRole === "admin" ? "admin_poktan" : "petani";
+      if (dbRole !== expectedDbRole) {
+        // Sign out so the user doesn't have a lingering session
+        await supabase.auth.signOut();
+        if (selectedRole === "admin" && dbRole === "petani") {
+          setError("Akun ini terdaftar sebagai Petani Lapangan. Silakan pilih tab Petani Lapangan untuk masuk.");
+        } else if (selectedRole === "petani" && dbRole === "admin_poktan") {
+          setError("Akun ini terdaftar sebagai Admin Poktan. Silakan pilih tab Admin Poktan untuk masuk.");
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      const isAdmin = dbRole === "admin_poktan";
+      sessionStorage.setItem("role", dbRole);
+      window.location.href = isAdmin ? "/dashboard" : "/petani";
     } catch (e) {
       setError("Gagal terhubung ke server. Menggunakan mode demo.");
-      sessionStorage.setItem("role", selectedRole);
+      const fallbackRole = selectedRole === "admin" ? "admin_poktan" : "petani";
+      sessionStorage.setItem("role", fallbackRole);
       window.location.href = selectedRole === "admin" ? "/dashboard" : "/petani";
     } finally {
       setIsLoading(false);
@@ -100,7 +124,7 @@ export default function LoginForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={role === "admin" ? "admin@poktan.id" : "budi@petani.id"}
+              placeholder={role === "admin" ? "admin@sidikkakao.id" : "ahmad@sidikkakao.id"}
               className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600 transition-all"
             />
           </div>
