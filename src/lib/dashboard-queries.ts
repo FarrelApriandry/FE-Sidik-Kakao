@@ -53,7 +53,7 @@ export async function fetchDashboardKPIs(
     rows.length > 0
       ? rows.reduce((s, r) => s + Number(r.price_per_kg), 0) / rows.length
       : 0;
-  const verifiedBatches = rows.filter((r) => r.qr_payload != null).length;
+  const verifiedBatches = rows.filter((r) => r.status === "Terverifikasi").length;
 
   let totalPetani: number | null = null;
   try {
