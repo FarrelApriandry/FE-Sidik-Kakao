@@ -30,6 +30,44 @@ export function getSupabase(): SupabaseClient {
   return _supabase;
 }
 
+/* ── Current User Helper ── */
+export interface AppUser {
+  id: string;
+  fullName: string;
+  avatar: string;
+  role: "admin" | "petani";
+  poktanId?: string;
+}
+
+/**
+ * Returns the currently authenticated Supabase user, or null if no session.
+ * Safe for client-side only (uses persisted session from localStorage).
+ */
+export async function getCurrentUser(): Promise<AppUser | null> {
+  try {
+    const supabase = getSupabase();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return null;
+    const meta = user.user_metadata ?? {};
+    const fullName: string = meta.full_name ?? "Petani";
+    const initials = fullName
+      .split(" ")
+      .map((w: string) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+    return {
+      id: user.id,
+      fullName,
+      avatar: initials,
+      role: (meta.role as "admin" | "petani") ?? "petani",
+      poktanId: meta.poktan_id as string | undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /* ── Seed IDs (for development / fallback) ── */
 export const SEED_POKTAN_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
 export const SEED_PETANI_ID = "22222222-2222-2222-2222-222222222222";
