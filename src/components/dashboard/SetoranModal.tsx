@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import Button from "../ui/Button";
 import type { CacaoGrade, GradePriceEntry } from "../../types";
@@ -11,8 +11,7 @@ import {
 } from "../../utils/storage";
 import { getCurrentUser } from "../../lib/supabase";
 import { fetchFarmerOptions } from "../../lib/dashboard-queries";
-import { QrCodeSvg, generateQrSvgHtml } from "../../utils/qr";
-import { printLabel } from "../../utils/printLabel";
+import { QrCodeSvg } from "../../utils/qr";
 
 interface Props {
   isOpen: boolean;
@@ -28,6 +27,7 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
   const [grade, setGrade] = useState<CacaoGrade>("A");
   const [savedRecord, setSavedRecord] = useState<HarvestRecord | null>(null);
   const [gradePrices, setGradePrices] = useState<GradePriceEntry[]>([]);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -97,8 +97,44 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
     onClose();
   };
 
+  const handlePrint = () => {
+    if (printRef.current && savedRecord) {
+      printRef.current.innerHTML = `
+        <div class="print-label-card">
+          <div class="print-qr-container">
+            ${printRef.current.querySelector('[data-qr]')?.innerHTML || ''}
+          </div>
+          <div class="print-batch-id">${savedRecord.id}</div>
+          <div class="print-grade">${savedRecord.gradeLabel}</div>
+          <div class="print-info-grid">
+            <div class="print-info-item">
+              <div class="print-info-label">Petani</div>
+              <div class="print-info-value">${savedRecord.farmerName}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Berat</div>
+              <div class="print-info-value">${savedRecord.weightKg} Kg</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Tanggal</div>
+              <div class="print-info-value">${savedRecord.dateFormatted}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Grade</div>
+              <div class="print-info-value">${savedRecord.grade}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    window.print();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <>
+      <div className="print-only" ref={printRef}></div>
+
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={handleClose}
@@ -281,7 +317,7 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
                   {savedRecord.gradeLabel}
                 </p>
               </div>
-              <div className="inline-block p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="inline-block p-4 bg-slate-50 rounded-xl border border-slate-200" data-qr>
                 <QrCodeSvg payload={savedRecord.qrPayload} />
                 <p className="text-[10px] font-mono text-slate-400 mt-2 break-all">
                   {savedRecord.qrPayload}
@@ -291,16 +327,7 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
                 variant="primary"
                 size="md"
                 icon="print"
-                onClick={() =>
-                  printLabel({
-                    id: savedRecord.id,
-                    farmerName: savedRecord.farmerName,
-                    weight: `${savedRecord.weightKg} Kg`,
-                    grade: savedRecord.grade,
-                    timestamp: savedRecord.dateFormatted,
-                    svgHtml: generateQrSvgHtml(savedRecord.qrPayload),
-                  })
-                }
+                onClick={handlePrint}
                 className="w-full h-12 rounded-xl"
               >
                 Cetak Label QR
@@ -315,7 +342,8 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

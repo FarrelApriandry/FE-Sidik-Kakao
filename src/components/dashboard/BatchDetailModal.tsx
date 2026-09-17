@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import Button from "../ui/Button";
 import StatusBadge from "./StatusBadge";
-import { QrCodeSvg, generateQrSvgHtml } from "../../utils/qr";
+import { QrCodeSvg } from "../../utils/qr";
 import { fetchGradePrices } from "../../utils/storage";
-import { printLabel } from "../../utils/printLabel";
 import type { HarvestBatch, GradePriceEntry } from "../../types";
 
 interface Props {
@@ -14,6 +13,7 @@ interface Props {
 
 export default function BatchDetailModal({ batch, onClose }: Props) {
   const [gradePrices, setGradePrices] = useState<GradePriceEntry[]>([]);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchGradePrices().then(setGradePrices);
@@ -37,8 +37,46 @@ export default function BatchDetailModal({ batch, onClose }: Props) {
     ts: batch.timestamp,
   });
 
+  const handlePrint = () => {
+    // Populate the print-only container with label content
+    if (printRef.current) {
+      printRef.current.innerHTML = `
+        <div class="print-label-card">
+          <div class="print-qr-container">
+            ${printRef.current.querySelector('[data-qr]')?.innerHTML || ''}
+          </div>
+          <div class="print-batch-id">${batch.id}</div>
+          <div class="print-grade">Grade ${batch.grade}</div>
+          <div class="print-info-grid">
+            <div class="print-info-item">
+              <div class="print-info-label">Petani</div>
+              <div class="print-info-value">${batch.farmerName}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Berat</div>
+              <div class="print-info-value">${batch.weight}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Tanggal</div>
+              <div class="print-info-value">${batch.timestamp}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Grade</div>
+              <div class="print-info-value">${batch.grade}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    window.print();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <>
+      {/* Hidden print-only container */}
+      <div className="print-only" ref={printRef}></div>
+
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
@@ -97,7 +135,7 @@ export default function BatchDetailModal({ batch, onClose }: Props) {
               <h3 className="text-sm font-bold text-slate-900">Label QR Code</h3>
             </div>
             <div className="flex items-center gap-5">
-              <div className="shrink-0 p-3 bg-white rounded-lg border border-slate-200">
+              <div className="shrink-0 p-3 bg-white rounded-lg border border-slate-200" data-qr>
                 <QrCodeSvg payload={qrPayload} />
               </div>
               <div className="flex-1 min-w-0 space-y-3">
@@ -109,16 +147,7 @@ export default function BatchDetailModal({ batch, onClose }: Props) {
                   variant="secondary"
                   size="sm"
                   icon="print"
-                  onClick={() =>
-                    printLabel({
-                      id: batch.id,
-                      farmerName: batch.farmerName,
-                      weight: batch.weight,
-                      grade: batch.grade,
-                      timestamp: batch.timestamp,
-                      svgHtml: generateQrSvgHtml(qrPayload),
-                    })
-                  }
+                  onClick={handlePrint}
                 >
                   Cetak Ulang Label
                 </Button>
@@ -127,7 +156,8 @@ export default function BatchDetailModal({ batch, onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

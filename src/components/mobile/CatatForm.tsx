@@ -8,8 +8,7 @@ import {
   fetchGradePrices,
   type HarvestRecord,
 } from "../../utils/storage";
-import { QrCodeSvg, generateQrSvgHtml } from "../../utils/qr";
-import { printLabel } from "../../utils/printLabel";
+import { QrCodeSvg } from "../../utils/qr";
 import BottomNav from "./BottomNav";
 
 /* ── Category Config ── */
@@ -637,26 +636,52 @@ function QrModal({
   syncStatus: "pending" | "synced" | "error";
   onClose: () => void;
 }) {
+  const printRef = useRef<HTMLDivElement>(null);
   const gradeBadgeClass =
     record.grade === "A"
       ? "bg-emerald-100 text-emerald-800"
       : "bg-amber-100 text-amber-800";
 
   const handlePrint = () => {
-    printLabel({
-      id: record.id,
-      farmerName: record.farmerName || "",
-      weight: `${record.weightKg} Kg`,
-      grade: record.grade,
-      timestamp: record.dateFormatted,
-      svgHtml: generateQrSvgHtml(record.qrPayload),
-    });
+    if (printRef.current) {
+      printRef.current.innerHTML = `
+        <div class="print-label-card">
+          <div class="print-qr-container">
+            ${printRef.current.querySelector('[data-qr]')?.innerHTML || ''}
+          </div>
+          <div class="print-batch-id">${record.id}</div>
+          <div class="print-grade">${record.gradeLabel}</div>
+          <div class="print-info-grid">
+            <div class="print-info-item">
+              <div class="print-info-label">Petani</div>
+              <div class="print-info-value">${record.farmerName || ""}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Berat</div>
+              <div class="print-info-value">${record.weightKg} Kg</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Tanggal</div>
+              <div class="print-info-value">${record.dateFormatted}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Grade</div>
+              <div class="print-info-value">${record.grade}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    window.print();
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-    >
+    <>
+      <div className="print-only" ref={printRef}></div>
+
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+      >
       <div
         className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -677,7 +702,7 @@ function QrModal({
 
         {/* QR Display */}
         <div className="px-6 py-5 flex flex-col items-center">
-          <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-xs">
+          <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-xs" data-qr>
             <QrCodeSvg payload={record.qrPayload} />
           </div>
           <p className="font-mono font-bold text-sm text-slate-600 mt-3 tracking-wide">
@@ -747,7 +772,8 @@ function QrModal({
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
