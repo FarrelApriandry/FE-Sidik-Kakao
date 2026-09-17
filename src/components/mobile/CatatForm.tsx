@@ -46,6 +46,7 @@ export default function CatatForm() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [savedRecord, setSavedRecord] = useState<HarvestRecord | null>(null);
   const [syncStatus, setSyncStatus] = useState<"pending" | "synced" | "error">("pending");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [gradePrices, setGradePrices] = useState<GradePriceEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,41 +129,58 @@ export default function CatatForm() {
     [weightKg]
   );
 
+  /* Finish handler – reset form and navigate home */
+  const handleFinish = useCallback(() => {
+    setWeightKg("");
+    setPhotoDataUrl(null);
+    setAiResult(null);
+    setSavedRecord(null);
+    setShowQrModal(false);
+    window.location.href = "/petani";
+  }, []);
+
   /* Submit handler */
   const handleSubmit = async () => {
+    if (isSubmitting || showQrModal) return;
+    setIsSubmitting(true);
+
     if (navigator.vibrate) navigator.vibrate(50);
 
-    const now = new Date();
-    const grade = aiResult?.grade ?? "A";
-    const batchId = generateBatchId();
+    try {
+      const now = new Date();
+      const grade = aiResult?.grade ?? "A";
+      const batchId = generateBatchId();
 
-    const record: HarvestRecord = {
-      id: batchId,
-      farmerName: "Budi Santoso",
-      date: now.toISOString(),
-      dateFormatted: formatDateId(now),
-      weightKg: parsedWeight,
-      category,
-      grade,
-      gradeLabel: grade === "A" ? "Grade A (SNI)" : "Grade B",
-      fungalStatus: aiResult?.fungalStatus ?? "Bebas Jamur",
-      totalValue: estimatedTotal,
-      pricePerKg,
-      status: grade === "A" ? "Terverifikasi" : "Proses Curing",
-      qrPayload: JSON.stringify({
+      const record: HarvestRecord = {
         id: batchId,
+        farmerName: "Budi Santoso",
+        date: now.toISOString(),
+        dateFormatted: formatDateId(now),
         weightKg: parsedWeight,
+        category,
         grade,
-        timestamp: now.toISOString(),
-      }),
-      syncStatus: "pending",
-      createdAt: now.toISOString(),
-    };
+        gradeLabel: grade === "A" ? "Grade A (SNI)" : "Grade B",
+        fungalStatus: aiResult?.fungalStatus ?? "Bebas Jamur",
+        totalValue: estimatedTotal,
+        pricePerKg,
+        status: grade === "A" ? "Terverifikasi" : "Proses Curing",
+        qrPayload: JSON.stringify({
+          id: batchId,
+          weightKg: parsedWeight,
+          grade,
+          timestamp: now.toISOString(),
+        }),
+        syncStatus: "pending",
+        createdAt: now.toISOString(),
+      };
 
-    const saved = await saveHarvest(record);
-    setSavedRecord(saved);
-    setSyncStatus(saved.syncStatus);
-    setShowQrModal(true);
+      const saved = await saveHarvest(record);
+      setSavedRecord(saved);
+      setSyncStatus(saved.syncStatus);
+      setShowQrModal(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -212,11 +230,11 @@ export default function CatatForm() {
           />
           <button
             onClick={handleSubmit}
-            disabled={!aiResult || parsedWeight <= 0}
+            disabled={!aiResult || parsedWeight <= 0 || isSubmitting}
             className="w-full h-14 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-display font-bold text-base rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2.5"
           >
-            <MaterialIcon name="save" size={22} className="text-white" />
-            Simpan & Generate QR Label
+            <MaterialIcon name={isSubmitting ? "sync" : "save"} size={22} className={`text-white ${isSubmitting ? "animate-spin" : ""}`} />
+            {isSubmitting ? "Menyimpan Data..." : "Simpan & Generate QR Label"}
           </button>
           {(!aiResult || parsedWeight <= 0) && (
             <p className="text-center text-xs text-slate-400">
@@ -232,7 +250,7 @@ export default function CatatForm() {
         <QrModal
           record={savedRecord}
           syncStatus={syncStatus}
-          onClose={() => setShowQrModal(false)}
+          onClose={handleFinish}
         />
       )}
 
@@ -630,7 +648,6 @@ function QrModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-      onClick={onClose}
     >
       <div
         className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
@@ -715,7 +732,7 @@ function QrModal({
             Cetak Label QR
           </button>
           <button
-            onClick={() => { window.location.href = "/petani"; }}
+            onClick={onClose}
             className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
           >
             Selesai &amp; Kembali ke Beranda
