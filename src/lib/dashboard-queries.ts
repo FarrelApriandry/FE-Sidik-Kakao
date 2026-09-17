@@ -55,11 +55,18 @@ export async function fetchDashboardKPIs(
       : 0;
   const verifiedBatches = rows.filter((r) => r.qr_payload != null).length;
 
-  const { count: totalPetani } = await supabase
-    .from("profiles")
-    .select("id", { count: "exact", head: true })
-    .eq("poktan_id", poktanId)
-    .eq("role", "petani");
+  let totalPetani: number | null = null;
+  try {
+    const { count } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("poktan_id", poktanId)
+      .eq("role", "petani");
+    totalPetani = count;
+  } catch {
+    // RLS or fetch error — fall back gracefully
+    totalPetani = null;
+  }
 
   return {
     totalKg,
@@ -79,7 +86,8 @@ export async function fetchMonthlyTrend(
   months = 6
 ): Promise<MonthlyTrend[]> {
   const supabase = getSupabase();
-  const cutoff = new Date();
+  const now = new Date();
+  const cutoff = new Date(now);
   cutoff.setMonth(cutoff.getMonth() - months);
 
   const { data, error } = await supabase
@@ -91,6 +99,7 @@ export async function fetchMonthlyTrend(
 
   if (error) throw error;
 
+  // Aggregate actual rows by month key ("YYYY-MM")
   const monthMap = new Map<string, { volumeKg: number; prices: number[] }>();
   for (const row of data ?? []) {
     const key = row.created_at.slice(0, 7);
@@ -100,17 +109,27 @@ export async function fetchMonthlyTrend(
     monthMap.set(key, entry);
   }
 
-  return Array.from(monthMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, val]) => ({
+  // Generate the continuous N-month window ending at the current month
+  const window: MonthlyTrend[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const agg = monthMap.get(key);
+
+    window.push({
       month: shortMonthLabel(`${key}-01`),
       monthDate: `${key}-01`,
-      volume: Math.round((val.volumeKg / 1000) * 10) / 10,
+      volume: agg
+        ? Math.round((agg.volumeKg / 1000) * 10) / 10
+        : 0,
       price:
-        val.prices.length > 0
-          ? Math.round(val.prices.reduce((s, p) => s + p, 0) / val.prices.length)
+        agg && agg.prices.length > 0
+          ? Math.round(agg.prices.reduce((s, p) => s + p, 0) / agg.prices.length)
           : 0,
-    }));
+    });
+  }
+
+  return window;
 }
 
 /* ─────────────────────────────────────────────

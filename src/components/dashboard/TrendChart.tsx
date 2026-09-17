@@ -15,7 +15,8 @@ const MIN_PRICE = 35000;
 const MAX_PRICE = 55000;
 
 function mapX(index: number, total: number): number {
-  return SVG_LEFT + (index / (total - 1)) * SVG_WIDTH;
+  const denominator = Math.max(1, total - 1);
+  return SVG_LEFT + (index / denominator) * SVG_WIDTH;
 }
 
 function mapVolumeY(volume: number): number {
@@ -23,10 +24,32 @@ function mapVolumeY(volume: number): number {
 }
 
 function mapPriceY(price: number): number {
+  if (price <= 0) return SVG_BOTTOM;
   return SVG_BOTTOM - ((price - MIN_PRICE) / (MAX_PRICE - MIN_PRICE)) * SVG_HEIGHT;
 }
 
 export default function TrendChart({ data }: Props) {
+  // Empty state: no data to chart
+  if (!data || data.length === 0) {
+    return (
+      <div className="lg:col-span-7 bg-white border border-slate-200/80 p-5 rounded-xl shadow-xs flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-display font-bold text-base text-slate-900">
+              Tren Volume & Harga Jual
+            </h2>
+            <p className="text-xs text-slate-500">
+              Statistik agregat 6 bulan terakhir
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+          Belum ada data tren panen
+        </div>
+      </div>
+    );
+  }
+
   // Build polyline points for volume
   const volumePoints = data
     .map((d, i) => `${mapX(i, data.length)},${mapVolumeY(d.volume)}`)
