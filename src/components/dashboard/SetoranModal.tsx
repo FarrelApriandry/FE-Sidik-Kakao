@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import Button from "../ui/Button";
-import { MOCK_GRADE_PRICES } from "../../data/mock";
-import type { CacaoGrade } from "../../types";
+import type { CacaoGrade, GradePriceEntry } from "../../types";
 import {
   generateBatchId,
   formatDateId,
   saveHarvest,
+  fetchGradePrices,
   type HarvestRecord,
 } from "../../utils/storage";
 import { QrCodeSvg } from "../../utils/qr";
@@ -31,6 +31,11 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
   const [moisturePct, setMoisturePct] = useState("");
   const [grade, setGrade] = useState<CacaoGrade>("A");
   const [savedRecord, setSavedRecord] = useState<HarvestRecord | null>(null);
+  const [gradePrices, setGradePrices] = useState<GradePriceEntry[]>([]);
+
+  useEffect(() => {
+    fetchGradePrices().then(setGradePrices);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -38,7 +43,7 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
   const parsedMoisture = parseFloat(moisturePct) || 0;
   const isMoistureHigh = parsedMoisture > 8.5;
 
-  const priceEntry = MOCK_GRADE_PRICES.find(
+  const priceEntry = gradePrices.find(
     (p) => p.grade === grade && p.category === "kering"
   );
   const pricePerKg = priceEntry?.pricePerKg ?? 0;
@@ -47,7 +52,7 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
   const canSubmit =
     farmerName.trim() !== "" && parsedWeight > 0 && parsedMoisture > 0;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
     const now = new Date();
     const batchId = generateBatchId();
@@ -71,8 +76,10 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
         grade,
         timestamp: now.toISOString(),
       }),
+      syncStatus: "pending",
+      createdAt: now.toISOString(),
     };
-    saveHarvest(record);
+    await saveHarvest(record);
     setSavedRecord(record);
     onSave();
   };

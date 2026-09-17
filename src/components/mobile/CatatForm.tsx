@@ -1,11 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
-import { MOCK_GRADE_PRICES } from "../../data/mock";
-import type { BeanCategory, CacaoGrade, AiAnalysisResult } from "../../types";
+import type { BeanCategory, CacaoGrade, AiAnalysisResult, GradePriceEntry } from "../../types";
 import {
   generateBatchId,
   formatDateId,
   saveHarvest,
+  fetchGradePrices,
   type HarvestRecord,
 } from "../../utils/storage";
 import { QrCodeSvg } from "../../utils/qr";
@@ -45,7 +45,14 @@ export default function CatatForm() {
   const [aiResult, setAiResult] = useState<AiAnalysisResult | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [savedRecord, setSavedRecord] = useState<HarvestRecord | null>(null);
+  const [syncStatus, setSyncStatus] = useState<"pending" | "synced" | "error">("pending");
+  const [gradePrices, setGradePrices] = useState<GradePriceEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /* Load grade prices from Supabase */
+  useEffect(() => {
+    fetchGradePrices().then(setGradePrices);
+  }, []);
 
   /* ── Unsaved Changes Guard ── */
   const isDirty = weightKg.trim() !== "" || photoDataUrl !== null;
@@ -94,7 +101,7 @@ export default function CatatForm() {
 
   /* Valuation (reactive) */
   const parsedWeight = parseFloat(weightKg) || 0;
-  const priceEntry = MOCK_GRADE_PRICES.find(
+  const priceEntry = gradePrices.find(
     (p) => p.grade === aiResult?.grade && p.category === category
   );
   const pricePerKg = priceEntry?.pricePerKg ?? 0;
@@ -122,7 +129,7 @@ export default function CatatForm() {
   );
 
   /* Submit handler */
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (navigator.vibrate) navigator.vibrate(50);
 
     const now = new Date();
@@ -148,10 +155,13 @@ export default function CatatForm() {
         grade,
         timestamp: now.toISOString(),
       }),
+      syncStatus: "pending",
+      createdAt: now.toISOString(),
     };
 
-    saveHarvest(record);
-    setSavedRecord(record);
+    const saved = await saveHarvest(record);
+    setSavedRecord(saved);
+    setSyncStatus(saved.syncStatus);
     setShowQrModal(true);
   };
 
@@ -221,6 +231,7 @@ export default function CatatForm() {
       {showQrModal && savedRecord && (
         <QrModal
           record={savedRecord}
+          syncStatus={syncStatus}
           onClose={() => setShowQrModal(false)}
         />
       )}
@@ -600,9 +611,11 @@ function ValuationCard({
 
 function QrModal({
   record,
+  syncStatus,
   onClose,
 }: {
   record: HarvestRecord;
+  syncStatus: "pending" | "synced" | "error";
   onClose: () => void;
 }) {
   const gradeBadgeClass =
@@ -676,6 +689,18 @@ function QrModal({
             <span className="text-xs text-slate-500">Waktu Input</span>
             <span className="text-sm font-medium text-slate-700">
               {record.dateFormatted}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500">Status Sinkronisasi</span>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+              syncStatus === "synced"
+                ? "bg-emerald-100 text-emerald-800"
+                : syncStatus === "error"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-amber-100 text-amber-800"
+            }`}>
+              {syncStatus === "synced" ? "✓ Tersinkron" : syncStatus === "error" ? "✕ Gagal" : "⏳ Menunggu"}
             </span>
           </div>
         </div>
