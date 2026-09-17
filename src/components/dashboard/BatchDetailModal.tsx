@@ -90,7 +90,7 @@ export default function BatchDetailModal({ batch, onClose }: Props) {
           </div>
 
           {/* QR Code Preview */}
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-5">
+          <div className="bg-slate-50 rounded-xl border border-slate-100 p-5">
             <div className="flex items-center gap-3 mb-4">
               <MaterialIcon name="qr_code_2" size={18} className="text-brand-600" />
               <h3 className="text-sm font-bold text-slate-900">Label QR Code</h3>
@@ -99,8 +99,11 @@ export default function BatchDetailModal({ batch, onClose }: Props) {
               <div className="shrink-0 p-3 bg-white rounded-lg border border-slate-200">
                 <QrCodeSvg payload={qrPayload} />
               </div>
-              <div className="flex-1 min-w-0 space-y-2">
-                <p className="text-xs text-slate-500 font-mono break-all">{qrPayload}</p>
+              <div className="flex-1 min-w-0 space-y-3">
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-500 mb-1">Grade</p>
+                  <p className="text-2xl font-bold text-brand-700">Grade {batch.grade}</p>
+                </div>
                 <Button
                   variant="secondary"
                   size="sm"
