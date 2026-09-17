@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
-import { getHarvests, type HarvestRecord } from "../../utils/storage";
+import { fetchHarvests, type HarvestRecord } from "../../utils/storage";
 import BottomNav from "./BottomNav";
 
 /* ── Mock Data ── */
@@ -214,21 +214,19 @@ function RecentLogsSection() {
   const [logs, setLogs] = useState<HarvestLog[]>(RECENT_LOGS);
 
   useEffect(() => {
-    const stored = getHarvests();
-    if (stored.length === 0) return;
-
-    const localLogs: HarvestLog[] = stored.map((r: HarvestRecord) => ({
-      id: r.id,
-      date: r.dateFormatted.split(",")[0].trim(),
-      weight: `${r.weightKg} Kg`,
-      grade: r.gradeLabel,
-      status: r.status === "Terverifikasi" ? "terverifikasi" : "curing",
-    }));
-
-    // Prepend local entries, filtering out any mock duplicates
-    const mockIds = new Set(RECENT_LOGS.map((l) => l.id));
-    const filtered = localLogs.filter((l) => !mockIds.has(l.id));
-    setLogs([...filtered, ...RECENT_LOGS]);
+    fetchHarvests().then((stored) => {
+      if (stored.length === 0) return;
+      const localLogs: HarvestLog[] = stored.map((r: HarvestRecord) => ({
+        id: r.id,
+        date: r.dateFormatted.split(",")[0].trim(),
+        weight: `${r.weightKg} Kg`,
+        grade: r.gradeLabel,
+        status: r.status === "Terverifikasi" ? "terverifikasi" : "curing",
+      }));
+      const mockIds = new Set(RECENT_LOGS.map((l) => l.id));
+      const filtered = localLogs.filter((l) => !mockIds.has(l.id));
+      setLogs([...filtered, ...RECENT_LOGS]);
+    });
   }, []);
 
   return (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { HarvestBatch, Grade } from "../../types";
-import { getHarvests, type HarvestRecord } from "../../utils/storage";
+import { fetchHarvests, type HarvestRecord } from "../../utils/storage";
 import SearchInput from "../ui/SearchInput";
 import Button from "../ui/Button";
 import StatusBadge from "./StatusBadge";
@@ -32,34 +32,33 @@ export default function HarvestTable({ batches, onDetailClick, refreshKey }: Pro
   const [allBatches, setAllBatches] = useState<HarvestBatch[]>(batches);
 
   useEffect(() => {
-    const stored = getHarvests();
-    if (stored.length === 0) {
-      setAllBatches(batches);
-      return;
-    }
-
-    const localBatches: HarvestBatch[] = stored.map((r: HarvestRecord) => {
-      const mPct = r.moisturePct;
-      const mStatus: "optimal" | "perlu-jemur" =
-        mPct !== undefined && mPct > 8.5 ? "perlu-jemur" : "optimal";
-      return {
-        id: r.id,
-        farmerName: r.farmerName,
-        timestamp: r.dateFormatted,
-        weight: `${r.weightKg} Kg`,
-        grade: r.grade as Grade,
-        moisture: mPct !== undefined ? `${mPct}%` : "—",
-        moisturePct: mPct,
-        moistureStatus: mStatus,
-        totalValue: `Rp ${r.totalValue.toLocaleString("id-ID")}`,
-        status: r.status === "Terverifikasi" ? "terverifikasi" as const : "curing" as const,
-        actionLabel: "Cetak Label",
-      };
+    fetchHarvests().then((stored) => {
+      if (stored.length === 0) {
+        setAllBatches(batches);
+        return;
+      }
+      const localBatches: HarvestBatch[] = stored.map((r: HarvestRecord) => {
+        const mPct = r.moisturePct;
+        const mStatus: "optimal" | "perlu-jemur" =
+          mPct !== undefined && mPct > 8.5 ? "perlu-jemur" : "optimal";
+        return {
+          id: r.id,
+          farmerName: r.farmerName,
+          timestamp: r.dateFormatted,
+          weight: `${r.weightKg} Kg`,
+          grade: r.grade as Grade,
+          moisture: mPct !== undefined ? `${mPct}%` : "—",
+          moisturePct: mPct,
+          moistureStatus: mStatus,
+          totalValue: `Rp ${r.totalValue.toLocaleString("id-ID")}`,
+          status: r.status === "Terverifikasi" ? "terverifikasi" as const : "curing" as const,
+          actionLabel: "Cetak Label",
+        };
+      });
+      const mockIds = new Set(batches.map((b) => b.id));
+      const filtered = localBatches.filter((b) => !mockIds.has(b.id));
+      setAllBatches([...filtered, ...batches]);
     });
-
-    const mockIds = new Set(batches.map((b) => b.id));
-    const filtered = localBatches.filter((b) => !mockIds.has(b.id));
-    setAllBatches([...filtered, ...batches]);
   }, [batches, refreshKey]);
 
   const filteredBatches = allBatches.filter((b) =>

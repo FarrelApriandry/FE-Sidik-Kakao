@@ -3,9 +3,7 @@ import MaterialIcon from "../ui/MaterialIcon";
 import SearchInput from "../ui/SearchInput";
 import BottomNav from "./BottomNav";
 import { QrCodeSvg } from "../../utils/qr";
-import { getHarvests, type HarvestRecord } from "../../utils/storage";
-import { MOCK_HARVEST_BATCHES } from "../../data/mock";
-import type { HarvestBatch } from "../../types";
+import { fetchHarvests, type HarvestRecord } from "../../utils/storage";
 
 /* ── Filter Types ── */
 type FilterKey = "semua" | "terverifikasi" | "curing" | "gradeA" | "gradeB";
@@ -53,25 +51,6 @@ function GradeBadge({ grade }: { grade: string }) {
   );
 }
 
-/* ── Mock → HarvestRecord Mapper ── */
-function mockBatchToRecord(batch: HarvestBatch): HarvestRecord {
-  return {
-    id: batch.id,
-    farmerName: batch.farmerName,
-    date: new Date().toISOString(),
-    dateFormatted: batch.timestamp,
-    weightKg: parseFloat(batch.weight) || 0,
-    category: "kering",
-    grade: batch.grade as "A" | "B",
-    gradeLabel: batch.grade === "A" ? "Grade A (SNI)" : "Grade B",
-    fungalStatus: "Bebas Jamur",
-    totalValue: parseInt(batch.totalValue.replace(/[^\d]/g, ""), 10) || 0,
-    pricePerKg: 0,
-    status: batch.status === "terverifikasi" ? "Terverifikasi" : "Proses Curing",
-    qrPayload: JSON.stringify({ id: batch.id, grade: batch.grade }),
-  };
-}
-
 /* ── Format Rupiah ── */
 function formatRupiah(amount: number): string {
   return `Rp ${amount.toLocaleString("id-ID")}`;
@@ -87,16 +66,9 @@ export default function RiwayatPage() {
   const [selectedRecord, setSelectedRecord] = useState<HarvestRecord | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  /* Load & merge data */
+  /* Load data from Supabase + localStorage hybrid */
   useEffect(() => {
-    const stored = getHarvests();
-    const storedIds = new Set(stored.map((r) => r.id));
-
-    const mockRecords = MOCK_HARVEST_BATCHES
-      .filter((b) => !storedIds.has(b.id))
-      .map(mockBatchToRecord);
-
-    setRecords([...stored, ...mockRecords]);
+    fetchHarvests().then(setRecords);
   }, []);
 
   /* Filtered + searched records */
