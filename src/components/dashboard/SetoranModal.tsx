@@ -11,7 +11,8 @@ import {
 } from "../../utils/storage";
 import { getCurrentUser } from "../../lib/supabase";
 import { fetchFarmerOptions } from "../../lib/dashboard-queries";
-import { QrCodeSvg } from "../../utils/qr";
+import { QrCodeSvg, generateQrSvgHtml } from "../../utils/qr";
+import { printLabel } from "../../utils/printLabel";
 
 interface Props {
   isOpen: boolean;
@@ -290,7 +291,16 @@ export default function SetoranModal({ isOpen, onClose, onSave }: Props) {
                 variant="primary"
                 size="md"
                 icon="print"
-                onClick={() => window.print()}
+                onClick={() =>
+                  printLabel({
+                    id: savedRecord.id,
+                    farmerName: savedRecord.farmerName,
+                    weight: `${savedRecord.weightKg} Kg`,
+                    grade: savedRecord.grade,
+                    timestamp: savedRecord.dateFormatted,
+                    svgHtml: generateQrSvgHtml(savedRecord.qrPayload),
+                  })
+                }
                 className="w-full h-12 rounded-xl"
               >
                 Cetak Label QR

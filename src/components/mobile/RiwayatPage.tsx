@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import SearchInput from "../ui/SearchInput";
 import BottomNav from "./BottomNav";
-import { QrCodeSvg } from "../../utils/qr";
+import { QrCodeSvg, generateQrSvgHtml } from "../../utils/qr";
 import { fetchHarvests, type HarvestRecord } from "../../utils/storage";
+import { printLabel } from "../../utils/printLabel";
 
 /* ── Filter Types ── */
 type FilterKey = "semua" | "terverifikasi" | "curing" | "gradeA" | "gradeB";
@@ -246,7 +247,14 @@ function DetailModal({
       : "bg-amber-100 text-amber-800";
 
   const handlePrint = () => {
-    window.print();
+    printLabel({
+      id: record.id,
+      farmerName: record.farmerName || "",
+      weight: `${record.weightKg} Kg`,
+      grade: record.grade,
+      timestamp: record.dateFormatted,
+      svgHtml: generateQrSvgHtml(record.qrPayload),
+    });
   };
 
   return (

@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import Button from "../ui/Button";
 import StatusBadge from "./StatusBadge";
-import { QrCodeSvg } from "../../utils/qr";
+import { QrCodeSvg, generateQrSvgHtml } from "../../utils/qr";
 import { fetchGradePrices } from "../../utils/storage";
+import { printLabel } from "../../utils/printLabel";
 import type { HarvestBatch, GradePriceEntry } from "../../types";
 
 interface Props {
@@ -108,7 +109,16 @@ export default function BatchDetailModal({ batch, onClose }: Props) {
                   variant="secondary"
                   size="sm"
                   icon="print"
-                  onClick={() => window.print()}
+                  onClick={() =>
+                    printLabel({
+                      id: batch.id,
+                      farmerName: batch.farmerName,
+                      weight: batch.weight,
+                      grade: batch.grade,
+                      timestamp: batch.timestamp,
+                      svgHtml: generateQrSvgHtml(qrPayload),
+                    })
+                  }
                 >
                   Cetak Ulang Label
                 </Button>

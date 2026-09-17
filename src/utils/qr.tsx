@@ -64,6 +64,24 @@ export function generateQrGrid(seed: string): boolean[][] {
   return grid;
 }
 
+/* ── SVG HTML String Generator (for print) ── */
+export function generateQrSvgHtml(payload: string): string {
+  const grid = generateQrGrid(payload);
+  const cellSize = 8;
+  const size = grid.length * cellSize;
+
+  let rects = "";
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[r].length; c++) {
+      if (grid[r][c]) {
+        rects += `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="#11562a"/>`;
+      }
+    }
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="display:block;margin:0 auto"><rect width="${size}" height="${size}" fill="white"/>${rects}</svg>`;
+}
+
 /* ── SVG Component ── */
 export function QrCodeSvg({ payload }: { payload: string }) {
   const grid = generateQrGrid(payload);

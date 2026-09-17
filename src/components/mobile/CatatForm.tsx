@@ -8,7 +8,8 @@ import {
   fetchGradePrices,
   type HarvestRecord,
 } from "../../utils/storage";
-import { QrCodeSvg } from "../../utils/qr";
+import { QrCodeSvg, generateQrSvgHtml } from "../../utils/qr";
+import { printLabel } from "../../utils/printLabel";
 import BottomNav from "./BottomNav";
 
 /* ── Category Config ── */
@@ -642,7 +643,14 @@ function QrModal({
       : "bg-amber-100 text-amber-800";
 
   const handlePrint = () => {
-    window.print();
+    printLabel({
+      id: record.id,
+      farmerName: record.farmerName || "",
+      weight: `${record.weightKg} Kg`,
+      grade: record.grade,
+      timestamp: record.dateFormatted,
+      svgHtml: generateQrSvgHtml(record.qrPayload),
+    });
   };
 
   return (
