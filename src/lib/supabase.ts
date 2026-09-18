@@ -37,6 +37,7 @@ export interface AppUser {
   avatar: string;
   role: "admin_poktan" | "petani";
   poktanId?: string;
+  estateAreaHa: number | null; 
 }
 
 /**
@@ -53,7 +54,7 @@ export async function getCurrentUser(): Promise<AppUser | null> {
     // Fetch role + poktan_id from profiles table (source of truth)
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name, role, poktan_id")
+      .select("full_name, role, poktan_id, estate_area_ha")
       .eq("id", user.id)
       .single();
 
@@ -71,6 +72,7 @@ export async function getCurrentUser(): Promise<AppUser | null> {
       avatar: initials,
       role: (profile?.role as "admin_poktan" | "petani") ?? "petani",
       poktanId: profile?.poktan_id ?? (user.user_metadata?.poktan_id as string | undefined),
+      estateAreaHa: profile?.estate_area_ha != null ? Number(profile.estate_area_ha) : null,
     };
   } catch {
     return null;

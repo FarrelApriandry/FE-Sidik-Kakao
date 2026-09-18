@@ -16,6 +16,7 @@ export default function AkunPage() {
   const [syncSuccess, setSyncSuccess] = useState(false);
   const [profileName, setProfileName] = useState("Memuat...");
   const [profileAvatar, setProfileAvatar] = useState("...");
+  const [profileLahan, setProfileLahan] = useState("...");
   const [profilePoktan, setProfilePoktan] = useState("Memuat...");
   const [profileRole, setProfileRole] = useState("petani");
 
@@ -27,6 +28,7 @@ export default function AkunPage() {
       setProfileName(u.fullName);
       setProfileAvatar(initials);
       setProfileRole(u.role ?? "petani");
+      setProfileLahan(u.estateAreaHa ? `${u.estateAreaHa} Ha` : "-");
       if (u.poktanId) {
         fetchPoktanName(u.poktanId).then(setProfilePoktan);
       }
@@ -104,7 +106,7 @@ export default function AkunPage() {
 
       <main className="flex-1 overflow-y-auto px-4 pt-4 pb-24 space-y-4">
         {/* Profile Card */}
-        <ProfileCard avatar={profileAvatar} name={profileName} poktan={profilePoktan} />
+        <ProfileCard avatar={profileAvatar} name={profileName} poktan={profilePoktan} lahan={profileLahan} />
 
         {/* Sync Status Card */}
         <SyncStatusCard
@@ -133,7 +135,7 @@ export default function AkunPage() {
    ══════════════════════════════════════════════ */
 
 /* ── Profile Card ── */
-function ProfileCard({ avatar, name, poktan }: { avatar: string; name: string; poktan: string }) {
+function ProfileCard({ avatar, name, poktan, lahan }: { avatar: string; name: string; poktan: string; lahan: string; }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
       <div className="flex items-center gap-4">
@@ -162,7 +164,7 @@ function ProfileCard({ avatar, name, poktan }: { avatar: string; name: string; p
           </div>
           <div>
             <span className="text-[11px] text-slate-500 block">Luas Lahan</span>
-            <span className="text-sm font-bold text-slate-900">-</span>
+            <span className="text-sm font-bold text-slate-900">{lahan}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
