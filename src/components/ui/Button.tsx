@@ -11,6 +11,7 @@ interface Props {
   onClick?: () => void;
   className?: string;
   type?: "button" | "submit" | "reset";
+  disabled?: boolean;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
@@ -35,11 +36,13 @@ export default function Button({
   onClick,
   className = "",
   type = "button",
+  disabled = false,
 }: Props) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={`inline-flex items-center justify-center gap-2 font-semibold transition-all active:scale-[0.98] ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
     >
       {icon && <MaterialIcon name={icon} size={size === "sm" ? 14 : 18} />}

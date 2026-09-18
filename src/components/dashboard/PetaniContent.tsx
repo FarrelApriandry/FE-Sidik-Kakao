@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PageHeader from "./PageHeader";
 import MaterialIcon from "../ui/MaterialIcon";
 import Button from "../ui/Button";
+import TambahPetaniModal from "./TambahPetaniModal";
 import { getCurrentUser } from "../../lib/supabase";
 import { fetchFarmersWithDeposits } from "../../lib/dashboard-queries";
 import type { FarmerWithDeposit } from "../../types";
@@ -9,21 +10,32 @@ import type { FarmerWithDeposit } from "../../types";
 export default function PetaniContent() {
   const [farmers, setFarmers] = useState<FarmerWithDeposit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const loadFarmers = useCallback(async () => {
+    const user = await getCurrentUser();
+    if (!user?.poktanId) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const data = await fetchFarmersWithDeposits(user.poktanId);
+      setFarmers(data);
+    } catch (e) {
+      console.error("Failed to load farmers:", e);
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    async function load() {
-      const user = await getCurrentUser();
-      if (!user?.poktanId) { setLoading(false); return; }
-      try {
-        const data = await fetchFarmersWithDeposits(user.poktanId);
-        setFarmers(data);
-      } catch (e) {
-        console.error("Failed to load farmers:", e);
-      }
-      setLoading(false);
-    }
-    load();
-  }, []);
+    loadFarmers();
+  }, [loadFarmers, refreshKey]);
+
+  const handleFarmerAdded = () => {
+    setIsModalOpen(false);
+    setRefreshKey((k) => k + 1);
+  };
   return (
     <main className="p-4 lg:p-8 space-y-6 w-full mx-auto">
       <PageHeader
@@ -31,6 +43,7 @@ export default function PetaniContent() {
         subtitle="Daftar anggota poktan dan informasi kepemilikan lahan."
         ctaLabel="Tambah Petani"
         ctaIcon="person_add"
+        onCtaClick={() => setIsModalOpen(true)}
       />
 
       <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs">
@@ -105,6 +118,12 @@ export default function PetaniContent() {
           </table>
         </div>
       </div>
+
+      <TambahPetaniModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleFarmerAdded}
+      />
     </main>
   );
 }
