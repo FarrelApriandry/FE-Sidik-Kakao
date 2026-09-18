@@ -74,7 +74,12 @@ export default function TambahPetaniModal({ isOpen, onClose, onSuccess }: Props)
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Gagal menambahkan petani.");
+        // Surface the actual server error; fall back to a clear default
+        const serverMsg =
+          (data.error as string) ??
+          (data.msg as string) ??
+          "Gagal menambahkan petani.";
+        setError(serverMsg);
         setIsSubmitting(false);
         return;
       }

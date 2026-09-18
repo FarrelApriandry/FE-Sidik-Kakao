@@ -1,6 +1,9 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
 
+/** Mark this route as server-rendered so POST requests are handled at runtime. */
+export const prerender = false;
+
 /**
  * POST /api/petani
  *
@@ -81,6 +84,8 @@ export const POST: APIRoute = async ({ request }) => {
     error: authError,
   } = await adminClient.auth.getUser(accessToken);
 
+  console.log("[/api/petani] authError:", authError, "adminUser.id:", adminUser?.id);
+
   if (authError || !adminUser) {
     return new Response(
       JSON.stringify({ error: "Token tidak valid atau sudah kedaluwarsa." }),
@@ -91,13 +96,30 @@ export const POST: APIRoute = async ({ request }) => {
   /* ── Resolve admin's poktan_id & role from profiles ── */
   const { data: adminProfile, error: profileError } = await adminClient
     .from("profiles")
-    .select("role, poktan_id")
+    .select("id, role, poktan_id")
     .eq("id", adminUser.id)
-    .single();
+    .maybeSingle();
 
-  if (profileError || !adminProfile || adminProfile.role !== "admin_poktan") {
+  console.log("[/api/petani] profileError:", profileError);
+  console.log("[/api/petani] adminProfile:", JSON.stringify(adminProfile));
+
+  if (profileError) {
     return new Response(
-      JSON.stringify({ error: "Hanya admin poktan yang bisa menambah petani." }),
+      JSON.stringify({ error: "Gagal memuat profil admin.", reason: "profile_error", detail: profileError.message }),
+      { status: 403, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  if (!adminProfile) {
+    return new Response(
+      JSON.stringify({ error: "Profil admin tidak ditemukan. Pastikan profil sudah dibuat di tabel profiles.", reason: "no_profile" }),
+      { status: 403, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  if (adminProfile.role !== "admin_poktan") {
+    return new Response(
+      JSON.stringify({ error: `Role saat ini: '${adminProfile.role}'. Hanya 'admin_poktan' yang bisa menambah petani.`, reason: "not_admin" }),
       { status: 403, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -114,34 +136,44 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   if (createError || !newUser?.user) {
+    // Supabase Admin API error — extract the most descriptive message available
+    const raw =
+      (createError as Record<string, unknown>) ??
+      {};
     const msg =
-      createError?.message?.includes("already") ||
-      createError?.message?.includes("exists")
-        ? "Email sudah terdaftar."
-        : createError?.message ?? "Gagal membuat akun autentikasi.";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+      (raw.message as string) ??
+      (raw.msg as string) ??
+      (raw.error_description as string) ??
+      "Gagal membuat akun autentikasi.";
+    console.error("[/api/petani] createUser failed:", JSON.stringify(createError));
+    return new Response(
+      JSON.stringify({
+        error: msg,
+        code: (raw as Record<string, unknown>).status ?? 400,
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
   }
 
-  /* ── Insert profile row ── */
-  const { error: insertError } = await adminClient.from("profiles").insert({
-    id: newUser.user.id,
-    full_name: fullName,
-    phone_number: phoneNumber ?? null,
-    estate_area_ha: estateAreaHa != null ? estateAreaHa : null,
-    poktan_id: poktanId,
-    role: "petani",
-  });
+  /* ── Update the profile row created by the Supabase trigger ── */
+  const { error: updateError } = await adminClient
+    .from("profiles")
+    .update({
+      full_name: fullName,
+      phone_number: phoneNumber ?? null,
+      estate_area_ha: estateAreaHa != null ? estateAreaHa : null,
+      poktan_id: poktanId,
+      role: "petani",
+    })
+    .eq("id", newUser.user.id);
 
-  if (insertError) {
-    console.error("[/api/petani] Profile insert failed:", insertError);
+  if (updateError) {
+    console.error("[/api/petani] Profile update failed:", updateError);
     // Attempt to clean up the orphan auth user
     await adminClient.auth.admin.deleteUser(newUser.user.id);
     return new Response(
       JSON.stringify({
-        error: `Gagal menyimpan profil: ${insertError.message}`,
+        error: `Gagal menyimpan profil: ${updateError.message}`,
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
