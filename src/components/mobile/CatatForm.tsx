@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import MaterialIcon from "../ui/MaterialIcon";
 import type { BeanCategory, CacaoGrade, AiAnalysisResult, GradePriceEntry } from "../../types";
+import { getCurrentUser, type AppUser } from "../../lib/supabase";
 import {
   generateBatchId,
   formatDateId,
@@ -48,10 +49,14 @@ export default function CatatForm() {
   const [syncStatus, setSyncStatus] = useState<"pending" | "synced" | "error">("pending");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gradePrices, setGradePrices] = useState<GradePriceEntry[]>([]);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* Load grade prices from Supabase */
+  /* Load current user & grade prices from Supabase */
   useEffect(() => {
+    getCurrentUser().then((user) => {
+      if (user) setCurrentUser(user);
+    });
     fetchGradePrices().then(setGradePrices);
   }, []);
 
@@ -76,11 +81,9 @@ export default function CatatForm() {
   useEffect(() => {
     if (!isDirty) return;
 
-    // Push a dummy state so the next popstate is ours to intercept
     window.history.pushState(null, "", window.location.href);
 
     const onPopState = () => {
-      // Re-push so the user doesn't actually leave
       window.history.pushState(null, "", window.location.href);
       setPendingUrl("/petani");
       setShowExitModal(true);
@@ -153,7 +156,9 @@ export default function CatatForm() {
 
       const record: HarvestRecord = {
         id: batchId,
-        farmerName: "Budi Santoso",
+        farmerId: currentUser?.id,
+        farmerName: currentUser?.fullName ?? "Petani",
+        poktanId: currentUser?.poktanId,
         date: now.toISOString(),
         dateFormatted: formatDateId(now),
         weightKg: parsedWeight,
@@ -174,7 +179,11 @@ export default function CatatForm() {
         createdAt: now.toISOString(),
       };
 
-      const saved = await saveHarvest(record);
+      const saved = await saveHarvest(
+        record,
+        currentUser?.id,
+        currentUser?.poktanId
+      );
       setSavedRecord(saved);
       setSyncStatus(saved.syncStatus);
       setShowQrModal(true);
@@ -233,7 +242,11 @@ export default function CatatForm() {
             disabled={!aiResult || parsedWeight <= 0 || isSubmitting}
             className="w-full h-14 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-display font-bold text-base rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2.5"
           >
-            <MaterialIcon name={isSubmitting ? "sync" : "save"} size={22} className={`text-white ${isSubmitting ? "animate-spin" : ""}`} />
+            <MaterialIcon
+              name={isSubmitting ? "sync" : "save"}
+              size={22}
+              className={`text-white ${isSubmitting ? "animate-spin" : ""}`}
+            />
             {isSubmitting ? "Menyimpan Data..." : "Simpan & Generate QR Label"}
           </button>
           {(!aiResult || parsedWeight <= 0) && (
@@ -679,99 +692,97 @@ function QrModal({
     <>
       <div className="print-only" ref={printRef}></div>
 
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-      >
-      <div
-        className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-        style={{ animation: "modalSlideUp 0.3s ease-out" }}
-      >
-        {/* Header */}
-        <div className="bg-emerald-50 px-6 pt-6 pb-4 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
-            <MaterialIcon name="check_circle" size={32} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div
+          className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+          style={{ animation: "modalSlideUp 0.3s ease-out" }}
+        >
+          {/* Header */}
+          <div className="bg-emerald-50 px-6 pt-6 pb-4 text-center">
+            <div className="h-14 w-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
+              <MaterialIcon name="check_circle" size={32} />
+            </div>
+            <h2 className="font-display font-bold text-lg text-emerald-900 mt-3">
+              Panen Berhasil Dicatat!
+            </h2>
+            <p className="text-xs text-emerald-700 mt-1">
+              Label QR Batch telah digenerate
+            </p>
           </div>
-          <h2 className="font-display font-bold text-lg text-emerald-900 mt-3">
-            Panen Berhasil Dicatat!
-          </h2>
-          <p className="text-xs text-emerald-700 mt-1">
-            Label QR Batch telah digenerate
-          </p>
-        </div>
 
-        {/* QR Display */}
-        <div className="px-6 py-5 flex flex-col items-center">
-          <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-xs" data-qr>
-            <QrCodeSvg payload={record.qrPayload} />
-          </div>
-          <p className="font-mono font-bold text-sm text-slate-600 mt-3 tracking-wide">
-            {record.id}
-          </p>
-        </div>
-
-        {/* Batch Summary Sheet */}
-        <div className="mx-6 mb-4 bg-slate-50 rounded-xl p-4 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">ID Batch</span>
-            <span className="text-sm font-mono font-bold text-slate-800">
+          {/* QR Display */}
+          <div className="px-6 py-5 flex flex-col items-center">
+            <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-xs" data-qr>
+              <QrCodeSvg payload={record.qrPayload} />
+            </div>
+            <p className="font-mono font-bold text-sm text-slate-600 mt-3 tracking-wide">
               {record.id}
-            </span>
+            </p>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">Total Berat &amp; Grade</span>
-            <span className="text-sm font-semibold text-slate-800">
-              {record.weightKg} Kg{" "}
-              <span
-                className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${gradeBadgeClass}`}
-              >
-                {record.gradeLabel}
-              </span>
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">Nilai Panen</span>
-            <span className="text-sm font-bold text-slate-900">
-              Rp {record.totalValue.toLocaleString("id-ID")}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">Waktu Input</span>
-            <span className="text-sm font-medium text-slate-700">
-              {record.dateFormatted}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">Status Sinkronisasi</span>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-              syncStatus === "synced"
-                ? "bg-emerald-100 text-emerald-800"
-                : syncStatus === "error"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-amber-100 text-amber-800"
-            }`}>
-              {syncStatus === "synced" ? "✓ Tersinkron" : syncStatus === "error" ? "✕ Gagal" : "⏳ Menunggu"}
-            </span>
-          </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="px-6 pb-6 space-y-2.5">
-          <button
-            onClick={handlePrint}
-            className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white font-display font-bold text-sm rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-          >
-            <MaterialIcon name="print" size={20} className="text-white" />
-            Cetak Label QR
-          </button>
-          <button
-            onClick={onClose}
-            className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-          >
-            Selesai &amp; Kembali ke Beranda
-          </button>
+          {/* Batch Summary Sheet */}
+          <div className="mx-6 mb-4 bg-slate-50 rounded-xl p-4 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500">ID Batch</span>
+              <span className="text-sm font-mono font-bold text-slate-800">
+                {record.id}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500">Total Berat &amp; Grade</span>
+              <span className="text-sm font-semibold text-slate-800">
+                {record.weightKg} Kg{" "}
+                <span
+                  className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${gradeBadgeClass}`}
+                >
+                  {record.gradeLabel}
+                </span>
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500">Nilai Panen</span>
+              <span className="text-sm font-bold text-slate-900">
+                Rp {record.totalValue.toLocaleString("id-ID")}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500">Waktu Input</span>
+              <span className="text-sm font-medium text-slate-700">
+                {record.dateFormatted}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500">Status Sinkronisasi</span>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                syncStatus === "synced"
+                  ? "bg-emerald-100 text-emerald-800"
+                  : syncStatus === "error"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-amber-100 text-amber-800"
+              }`}>
+                {syncStatus === "synced" ? "✓ Tersinkron" : syncStatus === "error" ? "✕ Gagal" : "⏳ Menunggu"}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="px-6 pb-6 space-y-2.5">
+            <button
+              onClick={handlePrint}
+              className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white font-display font-bold text-sm rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <MaterialIcon name="print" size={20} className="text-white" />
+              Cetak Label QR
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              Selesai &amp; Kembali ke Beranda
+            </button>
+          </div>
         </div>
-      </div>
       </div>
     </>
   );
