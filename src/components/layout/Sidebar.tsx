@@ -74,7 +74,7 @@ export default function Sidebar({
         <div className="flex flex-col gap-3">
           <SyncStatusCard status={syncStatus} />
           <a
-            href="/petani/bantuan"
+            href="/dashboard/bantuan"
             className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
           >
             <MaterialIcon name="help" size={18} />

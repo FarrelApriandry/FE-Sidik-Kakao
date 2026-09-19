@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import DashboardShell from '../../components/layout/DashboardShell';
+import AdminBantuanContent from '../../components/dashboard/AdminBantuanContent';
+import { MOCK_NAV_ITEMS } from '../../data/mock';
+---
+
+<Layout title="SIDIK-KAKAO • Bantuan Admin">
+  <DashboardShell
+    client:load
+    navItems={MOCK_NAV_ITEMS}
+    currentPath={Astro.url.pathname}
+  >
+    <AdminBantuanContent client:load />
+  </DashboardShell>
+</Layout>
