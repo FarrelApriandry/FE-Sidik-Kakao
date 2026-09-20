@@ -162,6 +162,7 @@ export interface BatchTraceDetail {
   pricePerKg: number;
   totalValue: number;
   status: string;
+  photoUrl?: string | null;
   qrPayload: unknown;
   createdAt: string;
   farmerName: string;

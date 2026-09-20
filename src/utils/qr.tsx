@@ -65,10 +65,10 @@ export function generateQrGrid(seed: string): boolean[][] {
 }
 
 /* ── SVG Component ── */
-export function QrCodeSvg({ payload }: { payload: string }) {
+export function QrCodeSvg({ payload, size: explicitSize }: { payload: string; size?: number }) {
   const grid = generateQrGrid(payload);
-  const cellSize = 8;
-  const size = grid.length * cellSize;
+  const cellSize = explicitSize ? explicitSize / grid.length : 8;
+  const size = explicitSize ?? grid.length * 8;
 
   return (
     <svg

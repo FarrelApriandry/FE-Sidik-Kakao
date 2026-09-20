@@ -1,8 +1,9 @@
 import PageHeader from "./PageHeader";
 import MaterialIcon from "../ui/MaterialIcon";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { fetchBatchTrace } from "../../lib/dashboard-queries";
 import type { BatchTraceDetail } from "../../types";
+import { QrCodeSvg } from "../../utils/qr";
 
 interface Step {
   label: string;
@@ -61,10 +62,46 @@ export default function KetertelusuranContent() {
     setSearching(false);
   };
 
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = () => {
+    if (printRef.current && batch) {
+      printRef.current.innerHTML = `
+        <div class="print-label-card">
+          <div class="print-qr-container" data-qr>
+            ${printRef.current.querySelector('[data-qr]')?.innerHTML || ''}
+          </div>
+          <div class="print-batch-id">${batch.id}</div>
+          <div class="print-grade">${batch.gradeLabel}</div>
+          <div class="print-info-grid">
+            <div class="print-info-item">
+              <div class="print-info-label">Petani</div>
+              <div class="print-info-value">${batch.farmerName}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Berat</div>
+              <div class="print-info-value">${batch.weightKg} Kg</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Poktan</div>
+              <div class="print-info-value">${batch.poktanName}</div>
+            </div>
+            <div class="print-info-item">
+              <div class="print-info-label">Grade</div>
+              <div class="print-info-value">${batch.grade}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    window.print();
+  };
+
   const steps = batch ? buildSteps(batch) : [];
 
   return (
     <main className="p-4 lg:p-8 space-y-6 w-full mx-auto">
+      <div className="print-only" ref={printRef}></div>
       <PageHeader
         title="Ketertelusuran"
         subtitle="Lacak perjalanan kakao dari kebun hingga gudang ekspor."
@@ -107,13 +144,28 @@ export default function KetertelusuranContent() {
             <span className="p-2 rounded-lg bg-brand-50 text-brand-600">
               <MaterialIcon name="route" size={18} />
             </span>
-            <div>
+            <div className="flex-1">
               <h2 className="font-display font-bold text-base text-slate-900">Alur Rantai Pasok</h2>
               <p className="text-xs text-slate-500">
                 Batch: <span className="font-mono font-bold text-brand-700">{batch.id.slice(0, 12)}</span>
                 {" \u2014 "}<span className="font-semibold text-slate-700">{batch.farmerName}</span>
                 {" \u2014 "}<span className="text-slate-600">{batch.weightKg} Kg \u2022 Grade {batch.grade}</span>
               </p>
+            </div>
+            {/* Reprint QR Trigger */}
+            <div className="hidden print:block p-4 border border-dashed border-slate-300 rounded-lg">
+              <QrCodeSvg payload={batch.qrPayload as string} />
+            </div>
+            <div className="flex flex-col gap-2 items-center">
+              <div className="inline-flex p-2 bg-white rounded-lg border border-slate-200 shadow-sm" data-qr>
+                <QrCodeSvg payload={batch.qrPayload as string} size={80} />
+              </div>
+              <button
+                onClick={handlePrint}
+                className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+              >
+                <MaterialIcon name="print" size={14} /> Cetak Ulang Label
+              </button>
             </div>
           </div>
           <div className="relative ml-4">

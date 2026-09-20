@@ -27,6 +27,8 @@ export interface HarvestRecord {
   totalValue: number;
   pricePerKg: number;
   status: "Terverifikasi" | "Proses Curing";
+  photoUrl?: string | null;
+  photoFile?: File | null;
   qrPayload: string;
   syncStatus: "pending" | "synced" | "error";
   syncError?: string;
@@ -109,6 +111,7 @@ export function dbRowToHarvestRecord(
     totalValue: Number(row.total_value),
     pricePerKg: Number(row.price_per_kg),
     status: row.status as "Terverifikasi" | "Proses Curing",
+    photoUrl: (row.photo_url as string) ?? null,
     qrPayload:
       typeof row.qr_payload === "string"
         ? row.qr_payload
@@ -140,6 +143,7 @@ export function harvestRecordToDbRow(
     price_per_kg: record.pricePerKg,
     total_value: record.totalValue,
     status: record.status,
+    photo_url: record.photoUrl ?? null,
     qr_payload: qrPayload,
   };
 }
@@ -318,6 +322,46 @@ async function syncSingleRecord(
   record.poktanId = resolvedPoktanId;
 
   const supabase = getSupabase();
+
+  // If photoFile is attached, upload to bucket "beans" (via /api/upload endpoint for server auth or direct fallback)
+  if (record.photoFile) {
+    try {
+      const formData = new FormData();
+      formData.append("file", record.photoFile);
+      formData.append("farmerId", resolvedFarmerId);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.url) {
+          record.photoUrl = json.url;
+        }
+      } else {
+        // Fallback to client-side upload if endpoint not reachable
+        const fileExt = record.photoFile.name.split(".").pop() || "jpg";
+        const fileName = `${resolvedFarmerId}_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("beans")
+          .upload(fileName, record.photoFile, { upsert: true });
+
+        if (!uploadError) {
+          const { data: publicUrlData } = supabase.storage
+            .from("beans")
+            .getPublicUrl(fileName);
+          if (publicUrlData?.publicUrl) {
+            record.photoUrl = publicUrlData.publicUrl;
+          }
+        }
+      }
+    } catch {
+      // ignore storage failure, continue sync without photo_url if needed
+    }
+  }
+
   const dbRow = harvestRecordToDbRow(record, resolvedFarmerId, resolvedPoktanId);
   const { error } = await supabase
     .from("harvest_batches")

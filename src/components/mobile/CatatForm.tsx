@@ -41,6 +41,7 @@ function formatRupiah(amount: number): string {
 export default function CatatForm() {
   const [weightKg, setWeightKg] = useState("");
   const [category, setCategory] = useState<BeanCategory>("basah");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResult, setAiResult] = useState<AiAnalysisResult | null>(null);
@@ -121,6 +122,7 @@ export default function CatatForm() {
       const file = e.target.files?.[0];
       if (!file) return;
 
+      setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoDataUrl(reader.result as string);
@@ -173,6 +175,7 @@ export default function CatatForm() {
         totalValue: estimatedTotal,
         pricePerKg,
         status: grade === "A" ? "Terverifikasi" : "Proses Curing",
+        photoFile,
         qrPayload: JSON.stringify({
           id: batchId,
           weightKg: parsedWeight,

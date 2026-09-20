@@ -327,7 +327,7 @@ export async function fetchBatchTrace(
     .from("harvest_batches")
     .select(
       `id, weight_kg, grade, grade_label, moisture_pct, fungal_status,
-       price_per_kg, total_value, status, qr_payload, created_at, farmer_id,
+       price_per_kg, total_value, status, photo_url, qr_payload, created_at, farmer_id,
        poktan_id,
        profiles!farmer_id ( full_name ),
        poktans!poktan_id ( name, location )`
@@ -350,6 +350,7 @@ export async function fetchBatchTrace(
     pricePerKg: Number(row.price_per_kg),
     totalValue: Number(row.total_value),
     status: row.status as string,
+    photoUrl: (row.photo_url as string) ?? null,
     qrPayload: row.qr_payload,
     createdAt: row.created_at as string,
     farmerName: profile?.full_name ?? "Unknown",
