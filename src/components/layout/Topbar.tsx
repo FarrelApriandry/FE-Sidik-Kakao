@@ -53,7 +53,7 @@ export default function Topbar({
         {/* Divider */}
         <div className="h-5 w-[1px] bg-slate-200" />
 
-        {/* User Profile */}
+        {/* User Profile & Logout */}
         <div className="flex items-center gap-2.5">
           <div className="text-right hidden sm:flex flex-col">
             <span className="text-xs font-semibold text-slate-900 leading-tight">
@@ -64,6 +64,17 @@ export default function Topbar({
           <div className="h-8 w-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center border border-brand-600/20">
             <MaterialIcon name="person" size={20} />
           </div>
+          <button
+            onClick={async () => {
+              const { logoutUser } = await import("../../utils/storage");
+              await logoutUser();
+              window.location.href = "/";
+            }}
+            title="Keluar dari sesi Admin"
+            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-1"
+          >
+            <MaterialIcon name="logout" size={18} />
+          </button>
         </div>
       </div>
     </header>

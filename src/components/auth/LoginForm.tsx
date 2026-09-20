@@ -62,6 +62,17 @@ export default function LoginForm() {
 
       const isAdmin = dbRole === "admin_poktan";
       sessionStorage.setItem("role", dbRole);
+
+      // Set auth cookies for Astro SSR middleware & session synchronization
+      if (data.session?.access_token) {
+        const maxAge = data.session.expires_in || 3600;
+        document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${maxAge}; SameSite=Lax;`;
+        if (data.session.refresh_token) {
+          document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=604800; SameSite=Lax;`;
+        }
+        document.cookie = `sb-user-role=${dbRole}; path=/; max-age=${maxAge}; SameSite=Lax;`;
+      }
+
       window.location.href = isAdmin ? "/dashboard" : "/petani";
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Terjadi kesalahan saat menghubungi server.";

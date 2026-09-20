@@ -78,8 +78,3 @@ export async function getCurrentUser(): Promise<AppUser | null> {
     return null;
   }
 }
-
-/* ── Seed IDs (for development / fallback) ── */
-export const SEED_POKTAN_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-export const SEED_PETANI_ID = "22222222-2222-2222-2222-222222222222";
-export const SEED_ADMIN_ID = "11111111-1111-1111-1111-111111111111";

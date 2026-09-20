@@ -23,7 +23,10 @@ export default function AkunPage() {
   /* Load user profile from Supabase */
   useEffect(() => {
     getCurrentUser().then((u) => {
-      if (!u) return;
+      if (!u || u.role !== "petani") {
+        window.location.href = "/";
+        return;
+      }
       const initials = u.fullName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
       setProfileName(u.fullName);
       setProfileAvatar(initials);

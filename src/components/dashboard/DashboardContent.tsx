@@ -7,6 +7,8 @@ import QualityDonutChart from "./QualityDonutChart";
 import HarvestTable from "./HarvestTable";
 import SetoranModal from "./SetoranModal";
 import BatchDetailModal from "./BatchDetailModal";
+import HargaModal from "./HargaModal";
+import Button from "../ui/Button";
 import { getCurrentUser } from "../../lib/supabase";
 import {
   fetchDashboardKPIs,
@@ -33,6 +35,7 @@ export default function DashboardContent() {
   const [harvestBatches, setHarvestBatches] = useState<HarvestBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSetoranOpen, setIsSetoranOpen] = useState(false);
+  const [isHargaOpen, setIsHargaOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<HarvestBatch | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -151,13 +154,22 @@ export default function DashboardContent() {
   return (
     <main className="p-4 lg:p-8 space-y-6 w-full mx-auto">
       {/* Page Header & Primary Action */}
-      <PageHeader
-        title="Ikhtisar Dashboard"
-        subtitle="Pemantauan produksi, transparansi harga, dan ketertelusuran kakao."
-        ctaLabel="Setoran Panen"
-        ctaIcon="add"
-        onCtaClick={() => setIsSetoranOpen(true)}
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display font-bold text-2xl text-slate-900 tracking-tight">
+            Ikhtisar Dashboard
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">Pemantauan produksi, transparansi harga, dan ketertelusuran kakao.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" size="md" icon="payments" onClick={() => setIsHargaOpen(true)}>
+            Atur Harga Acuan
+          </Button>
+          <Button variant="primary" size="md" icon="add" onClick={() => setIsSetoranOpen(true)}>
+            Setoran Panen
+          </Button>
+        </div>
+      </div>
 
       {/* AI Early Warning Alert */}
       {weatherAlert && <AiAlertBanner alert={weatherAlert} />}
@@ -189,10 +201,21 @@ export default function DashboardContent() {
         onSave={handleSetoranSave}
       />
 
+      {/* Atur Harga Acuan Modal */}
+      <HargaModal
+        isOpen={isHargaOpen}
+        onClose={() => setIsHargaOpen(false)}
+        onSuccess={() => {
+          setIsHargaOpen(false);
+          setRefreshKey((k) => k + 1);
+        }}
+      />
+
       {/* Batch Detail Modal */}
       <BatchDetailModal
         batch={selectedBatch}
         onClose={() => setSelectedBatch(null)}
+        onUpdated={handleSetoranSave}
       />
     </main>
   );

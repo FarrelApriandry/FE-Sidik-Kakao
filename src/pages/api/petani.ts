@@ -13,10 +13,6 @@ export const prerender = false;
  *   { email, password, fullName, phoneNumber, estateAreaHa }
  *
  * Auth: Bearer <access_token> — must belong to an admin_poktan user.
- *
- * Server-side env required (not PUBLIC_):
- *   SUPABASE_URL            — same as PUBLIC_SUPABASE_URL
- *   SUPABASE_SERVICE_ROLE_KEY — Supabase service_role secret
  */
 
 export const POST: APIRoute = async ({ request }) => {
@@ -32,10 +28,10 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     body = await request.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Format data permintaan tidak valid." }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   const { email, password, fullName, phoneNumber, estateAreaHa } = body;
@@ -73,7 +69,7 @@ export const POST: APIRoute = async ({ request }) => {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(
-      JSON.stringify({ error: "Tidak ada token autentikasi." }),
+      JSON.stringify({ error: "Sesi tidak ditemukan. Silakan login kembali." }),
       { status: 401, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -86,12 +82,11 @@ export const POST: APIRoute = async ({ request }) => {
   if (!supabaseUrl || !serviceKey) {
     console.error("[/api/petani] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
     return new Response(
-      JSON.stringify({ error: "Konfigurasi server tidak lengkap." }),
+      JSON.stringify({ error: "Konfigurasi layanan server tidak lengkap." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  // Use service role client so we can both verify the token and create users
   const adminClient = createClient(supabaseUrl, serviceKey);
 
   const {
@@ -100,8 +95,9 @@ export const POST: APIRoute = async ({ request }) => {
   } = await adminClient.auth.getUser(accessToken);
 
   if (authError || !adminUser) {
+    console.error("[/api/petani] Auth verification failed:", authError?.message);
     return new Response(
-      JSON.stringify({ error: "Token tidak valid atau sudah kedaluwarsa." }),
+      JSON.stringify({ error: "Sesi autentikasi tidak valid atau sudah kedaluwarsa." }),
       { status: 401, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -113,56 +109,55 @@ export const POST: APIRoute = async ({ request }) => {
     .eq("id", adminUser.id)
     .maybeSingle();
 
-  if (profileError) {
+  if (profileError || !adminProfile) {
+    console.error("[/api/petani] Profile fetch error:", profileError?.message);
     return new Response(
-      JSON.stringify({ error: "Gagal memuat profil admin.", reason: "profile_error" }),
-      { status: 403, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  if (!adminProfile) {
-    return new Response(
-      JSON.stringify({ error: "Profil admin tidak ditemukan.", reason: "no_profile" }),
+      JSON.stringify({ error: "Profil akun admin tidak ditemukan." }),
       { status: 403, headers: { "Content-Type": "application/json" } }
     );
   }
 
   if (adminProfile.role !== "admin_poktan") {
     return new Response(
-      JSON.stringify({ error: "Hanya 'admin_poktan' yang bisa menambah petani.", reason: "not_admin" }),
+      JSON.stringify({ error: "Akses ditolak. Hanya Admin Poktan yang diizinkan." }),
       { status: 403, headers: { "Content-Type": "application/json" } }
     );
   }
 
   const poktanId = adminProfile.poktan_id as string;
 
-  /* ── Create Supabase Auth user (admin API — won't log out current session) ── */
+  /* ── Create Supabase Auth user ── */
   const { data: newUser, error: createError } =
     await adminClient.auth.admin.createUser({
-      email,
+      email: email.trim(),
       password,
-      email_confirm: true, // skip email verification
-      user_metadata: { full_name: fullName },
+      email_confirm: true,
+      user_metadata: { full_name: fullName.trim() },
     });
 
   if (createError || !newUser?.user) {
-    const msg = createError?.message ?? "Gagal membuat akun autentikasi.";
-    console.error("[/api/petani] createUser failed:", msg);
+    console.error("[/api/petani] createUser error:", createError?.message);
+
+    let userFriendlyMsg = "Gagal mendaftarkan akun petani.";
+    const rawMsg = createError?.message?.toLowerCase() ?? "";
+    if (rawMsg.includes("already registered") || rawMsg.includes("unique")) {
+      userFriendlyMsg = "Email sudah terdaftar. Gunakan email lain.";
+    } else if (rawMsg.includes("password")) {
+      userFriendlyMsg = "Password terlalu lemah. Minimal 6 karakter.";
+    }
+
     return new Response(
-      JSON.stringify({
-        error: msg,
-        code: createError?.status ?? 400,
-      }),
+      JSON.stringify({ error: userFriendlyMsg }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  /* ── Update the profile row created by the Supabase trigger ── */
+  /* ── Update profile created by database trigger ── */
   const { error: updateError } = await adminClient
     .from("profiles")
     .update({
-      full_name: fullName,
-      phone_number: phoneNumber ?? null,
+      full_name: fullName.trim(),
+      phone_number: phoneNumber?.trim() || null,
       estate_area_ha: estateAreaHa != null ? estateAreaHa : null,
       poktan_id: poktanId,
       role: "petani",
@@ -170,13 +165,11 @@ export const POST: APIRoute = async ({ request }) => {
     .eq("id", newUser.user.id);
 
   if (updateError) {
-    console.error("[/api/petani] Profile update failed:", updateError);
-    // Attempt to clean up the orphan auth user
+    console.error("[/api/petani] Profile update error:", updateError.message);
+    // Cleanup orphaned auth user
     await adminClient.auth.admin.deleteUser(newUser.user.id);
     return new Response(
-      JSON.stringify({
-        error: `Gagal menyimpan profil: ${updateError.message}`,
-      }),
+      JSON.stringify({ error: "Gagal menyimpan data profil petani." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -185,7 +178,7 @@ export const POST: APIRoute = async ({ request }) => {
     JSON.stringify({
       success: true,
       userId: newUser.user.id,
-      message: `Petani "${fullName}" berhasil ditambahkan.`,
+      message: `Petani "${fullName.trim()}" berhasil ditambahkan.`,
     }),
     { status: 200, headers: { "Content-Type": "application/json" } }
   );

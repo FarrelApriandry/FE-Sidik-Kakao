@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PageHeader from "./PageHeader";
 import MaterialIcon from "../ui/MaterialIcon";
 import Button from "../ui/Button";
 import { getCurrentUser } from "../../lib/supabase";
-import { fetchRekapSummary, fetchMonthlyRekap } from "../../lib/dashboard-queries";
+import { fetchRekapSummary, fetchMonthlyRekap, fetchRecentBatches } from "../../lib/dashboard-queries";
 import type { RekapSummary, MonthlyRekapRow } from "../../types";
 
 export default function RekapContent() {
@@ -28,6 +28,60 @@ export default function RekapContent() {
       setLoading(false);
     }
     load();
+  }, []);
+
+  const handleExportCsv = useCallback(async () => {
+    const user = await getCurrentUser();
+    if (!user?.poktanId) return;
+
+    try {
+      const batches = await fetchRecentBatches(user.poktanId, 500);
+      if (batches.length === 0) {
+        alert("Belum ada data panen untuk diexport.");
+        return;
+      }
+
+      const headers = [
+        "ID Batch",
+        "Nama Petani",
+        "Tanggal Setor",
+        "Berat (Kg)",
+        "Kadar Air (%)",
+        "Grade",
+        "Status",
+        "Harga / Kg (Rp)",
+        "Total Valuasi (Rp)",
+      ];
+
+      const csvRows = [
+        headers.join(","),
+        ...batches.map((b) =>
+          [
+            `"${b.id}"`,
+            `"${b.farmerName.replace(/"/g, '""')}"`,
+            `"${new Date(b.createdAt).toLocaleDateString("id-ID")}"`,
+            b.weightKg,
+            b.moisturePct ?? "-",
+            `"${b.grade}"`,
+            `"${b.status}"`,
+            b.pricePerKg,
+            b.totalValue,
+          ].join(",")
+        ),
+      ];
+
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Rekap_Panen_SIDIK_KAKAO_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error("Failed to export CSV:", e);
+      alert("Gagal mengeksport data CSV.");
+    }
   }, []);
 
   if (loading || !summary) {
@@ -57,6 +111,7 @@ export default function RekapContent() {
         subtitle="Rekapitulasi produksi panen kakao per bulan."
         ctaLabel="Export CSV"
         ctaIcon="download"
+        onCtaClick={handleExportCsv}
       />
 
       {/* Summary Cards */}

@@ -55,7 +55,11 @@ export default function CatatForm() {
   /* Load current user & grade prices from Supabase */
   useEffect(() => {
     getCurrentUser().then((user) => {
-      if (user) setCurrentUser(user);
+      if (user && user.role === "petani") {
+        setCurrentUser(user);
+      } else {
+        window.location.href = "/";
+      }
     });
     fetchGradePrices().then(setGradePrices);
   }, []);

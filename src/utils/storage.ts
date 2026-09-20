@@ -38,7 +38,7 @@ export interface HarvestRecord {
    Helpers
    ───────────────────────────────────────────── */
 export function generateBatchId(): string {
-  const num = Math.floor(Math.random() * 900) + 100;
+  const num = Math.floor(Math.random() * 9000) + 1000;
   return `BTH-KK-${num}`;
 }
 
@@ -219,6 +219,13 @@ export async function logoutUser(): Promise<void> {
     await supabase.auth.signOut();
   } catch {
     // silent
+  } finally {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("role");
+      document.cookie = "sb-access-token=; path=/; max-age=0; SameSite=Lax;";
+      document.cookie = "sb-refresh-token=; path=/; max-age=0; SameSite=Lax;";
+      document.cookie = "sb-user-role=; path=/; max-age=0; SameSite=Lax;";
+    }
   }
 }
 

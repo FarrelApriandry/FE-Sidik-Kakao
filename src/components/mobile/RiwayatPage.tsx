@@ -4,6 +4,7 @@ import SearchInput from "../ui/SearchInput";
 import BottomNav from "./BottomNav";
 import { QrCodeSvg } from "../../utils/qr";
 import { fetchHarvests, type HarvestRecord } from "../../utils/storage";
+import { getCurrentUser } from "../../lib/supabase";
 
 /* ── Filter Types ── */
 type FilterKey = "semua" | "terverifikasi" | "curing" | "gradeA" | "gradeB";
@@ -66,9 +67,15 @@ export default function RiwayatPage() {
   const [selectedRecord, setSelectedRecord] = useState<HarvestRecord | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  /* Load data from Supabase + localStorage hybrid */
+  /* Load user & data from Supabase + localStorage hybrid */
   useEffect(() => {
-    fetchHarvests().then(setRecords);
+    getCurrentUser().then((u) => {
+      if (u && u.role === "petani") {
+        fetchHarvests(u.id).then(setRecords);
+      } else {
+        window.location.href = "/";
+      }
+    });
   }, []);
 
   /* Filtered + searched records */

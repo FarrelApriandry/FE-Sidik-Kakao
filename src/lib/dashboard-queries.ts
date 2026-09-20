@@ -1,4 +1,5 @@
 import { getSupabase } from "./supabase";
+import { getHarvests, setHarvests } from "../utils/storage";
 import type {
   DashboardKPI,
   MonthlyTrend,
@@ -10,6 +11,7 @@ import type {
   BatchTraceDetail,
   MoistureStats,
   ForecastPoint,
+  CacaoGrade,
 } from "../types";
 
 /* ─────────────────────────────────────────────
@@ -453,6 +455,56 @@ export async function fetchFarmerOptions(poktanId: string): Promise<{ id: string
     .eq("role", "petani")
     .order("full_name");
   return (data ?? []).map((r) => ({ id: r.id, fullName: r.full_name }));
+}
+
+/* ─────────────────────────────────────────────
+   Q11: Batch Verification (Admin)
+   ───────────────────────────────────────────── */
+export async function verifyHarvestBatch(
+  batchId: string,
+  params: {
+    moisturePct?: number;
+    grade?: CacaoGrade;
+    status: "Terverifikasi" | "Proses Curing";
+  }
+): Promise<boolean> {
+  const supabase = getSupabase();
+  const updatePayload: Record<string, unknown> = {
+    status: params.status,
+  };
+  if (params.moisturePct !== undefined) {
+    updatePayload.moisture_pct = params.moisturePct;
+  }
+  if (params.grade) {
+    updatePayload.grade = params.grade;
+    updatePayload.grade_label = params.grade === "A" ? "Grade A (SNI)" : "Grade B Fermentasi";
+  }
+
+  const { error } = await supabase
+    .from("harvest_batches")
+    .update(updatePayload)
+    .eq("id", batchId);
+
+  if (error) {
+    console.error("Supabase batch update error:", error);
+  }
+
+  // Update local storage record if present
+  if (typeof window !== "undefined") {
+    const local = getHarvests();
+    const idx = local.findIndex((r) => r.id === batchId);
+    if (idx !== -1) {
+      if (params.moisturePct !== undefined) local[idx].moisturePct = params.moisturePct;
+      if (params.grade) {
+        local[idx].grade = params.grade;
+        local[idx].gradeLabel = params.grade === "A" ? "Grade A (SNI)" : "Grade B Fermentasi";
+      }
+      local[idx].status = params.status;
+      setHarvests(local);
+    }
+  }
+
+  return true;
 }
 
 export { fetchGradePrices } from "../utils/storage";

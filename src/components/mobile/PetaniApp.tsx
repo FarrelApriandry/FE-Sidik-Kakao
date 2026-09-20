@@ -60,11 +60,11 @@ export default function PetaniApp() {
   /* Phase A: Resolve authenticated user on mount */
   useEffect(() => {
     getCurrentUser().then((u) => {
-      if (u) {
+      if (u && u.role === "petani") {
         setUser(u);
         setIsAuthLoading(false);
       } else {
-        /* No session → redirect to login */
+        /* No session or wrong role → redirect to login */
         window.location.href = "/";
       }
     });
