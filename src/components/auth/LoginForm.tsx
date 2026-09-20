@@ -11,11 +11,18 @@ export default function LoginForm() {
 
   const handleLogin = async (selectedRole: "admin" | "petani") => {
     setError(null);
+
+    const loginEmail = email.trim();
+    const loginPassword = password.trim();
+
+    if (!loginEmail || !loginPassword) {
+      setError("Email dan password wajib diisi.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const supabase = getSupabase();
-      const loginEmail = email.trim() || (selectedRole === "admin" ? "admin@sidikkakao.id" : "ahmad@sidikkakao.id");
-      const loginPassword = password.trim() || (selectedRole === "admin" ? "AdminSidik2025!" : "PetaniSidik2025!");
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: loginEmail,
@@ -57,10 +64,8 @@ export default function LoginForm() {
       sessionStorage.setItem("role", dbRole);
       window.location.href = isAdmin ? "/dashboard" : "/petani";
     } catch (e) {
-      setError("Gagal terhubung ke server. Menggunakan mode demo.");
-      const fallbackRole = selectedRole === "admin" ? "admin_poktan" : "petani";
-      sessionStorage.setItem("role", fallbackRole);
-      window.location.href = selectedRole === "admin" ? "/dashboard" : "/petani";
+      const msg = e instanceof Error ? e.message : "Terjadi kesalahan saat menghubungi server.";
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

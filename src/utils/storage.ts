@@ -1,5 +1,5 @@
 import type { BeanCategory, CacaoGrade, GradePriceEntry } from "../types";
-import { getSupabase, SEED_POKTAN_ID, SEED_PETANI_ID } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 
 /* ─────────────────────────────────────────────
    Constants
@@ -129,8 +129,8 @@ export function harvestRecordToDbRow(
   catch { qrPayload = {}; }
   return {
     id: record.id,
-    farmer_id: farmerId ?? record.farmerId ?? SEED_PETANI_ID,
-    poktan_id: poktanId ?? record.poktanId ?? SEED_POKTAN_ID,
+    farmer_id: farmerId ?? record.farmerId,
+    poktan_id: poktanId ?? record.poktanId,
     weight_kg: record.weightKg,
     category: record.category,
     grade: record.grade,
@@ -288,8 +288,30 @@ async function syncSingleRecord(
   poktanId?: string
 ): Promise<void> {
   if (typeof window === "undefined") return;
+
+  let resolvedFarmerId = farmerId ?? record.farmerId;
+  let resolvedPoktanId = poktanId ?? record.poktanId;
+
+  if (!resolvedFarmerId || !resolvedPoktanId) {
+    const profile = await fetchProfile();
+    if (profile) {
+      if (!resolvedFarmerId) resolvedFarmerId = profile.id;
+      if (!resolvedPoktanId) resolvedPoktanId = profile.poktanId;
+    }
+  }
+
+  if (!resolvedFarmerId || !resolvedPoktanId) {
+    record.syncStatus = "error";
+    record.syncError = "Autentikasi/Poktan ID diperlukan untuk sinkronisasi.";
+    updateLocalRecord(record);
+    return;
+  }
+
+  record.farmerId = resolvedFarmerId;
+  record.poktanId = resolvedPoktanId;
+
   const supabase = getSupabase();
-  const dbRow = harvestRecordToDbRow(record, farmerId, poktanId);
+  const dbRow = harvestRecordToDbRow(record, resolvedFarmerId, resolvedPoktanId);
   const { error } = await supabase
     .from("harvest_batches")
     .upsert(dbRow, { onConflict: "id", ignoreDuplicates: false });

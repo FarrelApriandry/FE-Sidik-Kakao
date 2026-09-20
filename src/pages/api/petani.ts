@@ -40,16 +40,31 @@ export const POST: APIRoute = async ({ request }) => {
 
   const { email, password, fullName, phoneNumber, estateAreaHa } = body;
 
-  if (!email || !password || !fullName) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email.trim())) {
     return new Response(
-      JSON.stringify({ error: "email, password, dan fullName wajib diisi." }),
+      JSON.stringify({ error: "Format email tidak valid." }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  if (password.length < 6) {
+  if (!password || password.length < 6) {
     return new Response(
       JSON.stringify({ error: "Password minimal 6 karakter." }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  if (!fullName || fullName.trim().length === 0) {
+    return new Response(
+      JSON.stringify({ error: "Nama lengkap wajib diisi." }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  if (estateAreaHa != null && (typeof estateAreaHa !== "number" || estateAreaHa < 0)) {
+    return new Response(
+      JSON.stringify({ error: "Luas lahan harus berupa angka positif." }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -84,8 +99,6 @@ export const POST: APIRoute = async ({ request }) => {
     error: authError,
   } = await adminClient.auth.getUser(accessToken);
 
-  console.log("[/api/petani] authError:", authError, "adminUser.id:", adminUser?.id);
-
   if (authError || !adminUser) {
     return new Response(
       JSON.stringify({ error: "Token tidak valid atau sudah kedaluwarsa." }),
@@ -100,26 +113,23 @@ export const POST: APIRoute = async ({ request }) => {
     .eq("id", adminUser.id)
     .maybeSingle();
 
-  console.log("[/api/petani] profileError:", profileError);
-  console.log("[/api/petani] adminProfile:", JSON.stringify(adminProfile));
-
   if (profileError) {
     return new Response(
-      JSON.stringify({ error: "Gagal memuat profil admin.", reason: "profile_error", detail: profileError.message }),
+      JSON.stringify({ error: "Gagal memuat profil admin.", reason: "profile_error" }),
       { status: 403, headers: { "Content-Type": "application/json" } }
     );
   }
 
   if (!adminProfile) {
     return new Response(
-      JSON.stringify({ error: "Profil admin tidak ditemukan. Pastikan profil sudah dibuat di tabel profiles.", reason: "no_profile" }),
+      JSON.stringify({ error: "Profil admin tidak ditemukan.", reason: "no_profile" }),
       { status: 403, headers: { "Content-Type": "application/json" } }
     );
   }
 
   if (adminProfile.role !== "admin_poktan") {
     return new Response(
-      JSON.stringify({ error: `Role saat ini: '${adminProfile.role}'. Hanya 'admin_poktan' yang bisa menambah petani.`, reason: "not_admin" }),
+      JSON.stringify({ error: "Hanya 'admin_poktan' yang bisa menambah petani.", reason: "not_admin" }),
       { status: 403, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -136,20 +146,12 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   if (createError || !newUser?.user) {
-    // Supabase Admin API error — extract the most descriptive message available
-    const raw =
-      (createError as Record<string, unknown>) ??
-      {};
-    const msg =
-      (raw.message as string) ??
-      (raw.msg as string) ??
-      (raw.error_description as string) ??
-      "Gagal membuat akun autentikasi.";
-    console.error("[/api/petani] createUser failed:", JSON.stringify(createError));
+    const msg = createError?.message ?? "Gagal membuat akun autentikasi.";
+    console.error("[/api/petani] createUser failed:", msg);
     return new Response(
       JSON.stringify({
         error: msg,
-        code: (raw as Record<string, unknown>).status ?? 400,
+        code: createError?.status ?? 400,
       }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
