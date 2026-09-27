@@ -323,15 +323,22 @@ async function syncSingleRecord(
 
   const supabase = getSupabase();
 
-  // If photoFile is attached, upload to bucket "beans" (via /api/upload endpoint for server auth or direct fallback)
+  // If photoFile is attached, upload to the secured /api/upload endpoint
+  // (server verifies Bearer token + role, validates file type/size/content).
   if (record.photoFile) {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Sesi tidak ditemukan. Silakan login ulang.");
+      }
       const formData = new FormData();
       formData.append("file", record.photoFile);
-      formData.append("farmerId", resolvedFarmerId);
 
       const res = await fetch("/api/upload", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: formData,
       });
 
@@ -341,24 +348,23 @@ async function syncSingleRecord(
           record.photoUrl = json.url;
         }
       } else {
-        // Fallback to client-side upload if endpoint not reachable
-        const fileExt = record.photoFile.name.split(".").pop() || "jpg";
-        const fileName = `${resolvedFarmerId}_${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("beans")
-          .upload(fileName, record.photoFile, { upsert: true });
-
-        if (!uploadError) {
-          const { data: publicUrlData } = supabase.storage
-            .from("beans")
-            .getPublicUrl(fileName);
-          if (publicUrlData?.publicUrl) {
-            record.photoUrl = publicUrlData.publicUrl;
-          }
+        // NOTE: no client-side fallback — direct bucket uploads would
+        // bypass the server-side auth & file validation in /api/upload.
+        let detail = "";
+        try {
+          const errJson = await res.json();
+          if (errJson?.error) detail = `: ${errJson.error}`;
+        } catch {
+          // ignore JSON parse failure
         }
+        throw new Error(`Gagal mengunggah foto (HTTP ${res.status})${detail}`);
       }
-    } catch {
-      // ignore storage failure, continue sync without photo_url if needed
+    } catch (err) {
+      record.syncStatus = "error";
+      record.syncError =
+        err instanceof Error ? err.message : "Gagal mengunggah foto.";
+      updateLocalRecord(record);
+      return;
     }
   }
 
