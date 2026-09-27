@@ -468,8 +468,48 @@ export async function verifyHarvestBatch(
     grade?: CacaoGrade;
     status: "Terverifikasi" | "Proses Curing";
   }
-): Promise<boolean> {
+): Promise<true> {
+  if (
+    params.moisturePct !== undefined &&
+    (!Number.isFinite(params.moisturePct) ||
+      params.moisturePct < 0 ||
+      params.moisturePct > 30)
+  ) {
+    throw new Error("Kadar air harus berupa angka 0–30%.");
+  }
+  if (params.grade !== undefined && params.grade !== "A" && params.grade !== "B") {
+    throw new Error("Grade tidak valid.");
+  }
+
   const supabase = getSupabase();
+
+  /* ── Ownership check: admin may only verify batches of their own poktan ── */
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("Sesi tidak ditemukan. Silakan login ulang.");
+  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, poktan_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "admin_poktan" || !profile?.poktan_id) {
+    throw new Error("Hanya Admin Poktan yang dapat memverifikasi setoran.");
+  }
+  const { data: target } = await supabase
+    .from("harvest_batches")
+    .select("poktan_id")
+    .eq("id", batchId)
+    .maybeSingle();
+  if (!target) {
+    throw new Error("Batch tidak ditemukan.");
+  }
+  if (target.poktan_id !== profile.poktan_id) {
+    throw new Error("Batch ini bukan milik Poktan Anda.");
+  }
+
   const updatePayload: Record<string, unknown> = {
     status: params.status,
   };
@@ -487,7 +527,9 @@ export async function verifyHarvestBatch(
     .eq("id", batchId);
 
   if (error) {
-    console.error("Supabase batch update error:", error);
+    // Fail loudly so the UI shows the error instead of a fake success.
+    console.error("Supabase batch update error:", error.message);
+    throw new Error("Gagal menyimpan verifikasi. Coba lagi.");
   }
 
   // Update local storage record if present

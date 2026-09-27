@@ -33,10 +33,12 @@ export default function TambahPetaniModal({ isOpen, onClose, onSuccess }: Props)
 
   if (!isOpen) return null;
 
+  const hasLetterAndDigit = /[A-Za-z]/.test(password) && /[0-9]/.test(password);
   const canSubmit =
     fullName.trim() !== "" &&
     email.trim() !== "" &&
-    password.length >= 6 &&
+    password.length >= 10 &&
+    hasLetterAndDigit &&
     !isSubmitting;
 
   const handleSubmit = async () => {
@@ -172,12 +174,12 @@ export default function TambahPetaniModal({ isOpen, onClose, onSuccess }: Props)
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimal 6 karakter"
+                placeholder="Minimal 10 karakter, huruf + angka"
                 className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-colors"
               />
-              {password.length > 0 && password.length < 6 && (
+              {password.length > 0 && (password.length < 10 || !hasLetterAndDigit) && (
                 <p className="text-[11px] text-amber-600 mt-1">
-                  Password kurang dari 6 karakter
+                  Password minimal 10 karakter dan mengandung huruf + angka
                 </p>
               )}
             </div>
@@ -226,7 +228,7 @@ export default function TambahPetaniModal({ isOpen, onClose, onSuccess }: Props)
 
             {!canSubmit && !isSubmitting && (
               <p className="text-center text-xs text-slate-400 -mt-2">
-                Lengkapi field bertanda (*) dengan password minimal 6 karakter
+                Lengkapi field bertanda (*) dengan password minimal 10 karakter (huruf + angka)
               </p>
             )}
           </div>

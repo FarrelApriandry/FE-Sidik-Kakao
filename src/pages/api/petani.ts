@@ -1,8 +1,22 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, getClientIp } from "../../lib/rate-limit";
 
 /** Mark this route as server-rendered so POST requests are handled at runtime. */
 export const prerender = false;
+
+/* ── Password policy (also mirrored in TambahPetaniModal for UX) ── */
+const MIN_PASSWORD_LEN = 10;
+
+function passwordError(pw: string): string | null {
+  if (!pw || pw.length < MIN_PASSWORD_LEN) {
+    return `Password minimal ${MIN_PASSWORD_LEN} karakter.`;
+  }
+  if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) {
+    return "Password harus mengandung huruf dan angka.";
+  }
+  return null;
+}
 
 /**
  * POST /api/petani
@@ -16,6 +30,24 @@ export const prerender = false;
  */
 
 export const POST: APIRoute = async ({ request }) => {
+  /* ── Rate limit: max 10 farmer-creation requests / minute / IP ── */
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(`petani:${ip}`, 10, 60_000);
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({
+        error: `Terlalu banyak permintaan. Coba lagi dalam ${rl.retryAfterSec} detik.`,
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(rl.retryAfterSec),
+        },
+      }
+    );
+  }
+
   /* ── Parse & validate body ── */
   let body: {
     email?: string;
@@ -44,11 +76,12 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  if (!password || password.length < 6) {
-    return new Response(
-      JSON.stringify({ error: "Password minimal 6 karakter." }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+  const pwErr = passwordError(password ?? "");
+  if (pwErr) {
+    return new Response(JSON.stringify({ error: pwErr }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   if (!fullName || fullName.trim().length === 0) {
@@ -143,7 +176,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (rawMsg.includes("already registered") || rawMsg.includes("unique")) {
       userFriendlyMsg = "Email sudah terdaftar. Gunakan email lain.";
     } else if (rawMsg.includes("password")) {
-      userFriendlyMsg = "Password terlalu lemah. Minimal 6 karakter.";
+      userFriendlyMsg = "Password terlalu lemah. Minimal 10 karakter, huruf + angka.";
     }
 
     return new Response(

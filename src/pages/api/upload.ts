@@ -124,7 +124,9 @@ export const POST: APIRoute = async ({ request }) => {
     return json(400, { error: "Berkas bukan foto yang valid." });
   }
 
-  /* ── 4. Upload — path derived from the authenticated user ID ── */
+  /* ── 4. Upload — path derived from the authenticated user ID.
+     Stored as the internal storage path; served via GET /api/foto/<path>
+     which enforces ownership (bucket `beans` is private). ── */
   const ext = ALLOWED_TYPES[file.type].ext;
   const rand = crypto.randomUUID().slice(0, 8);
   const fileName = `${user.id}/${Date.now()}_${rand}.${ext}`;
@@ -142,12 +144,8 @@ export const POST: APIRoute = async ({ request }) => {
     return json(500, { error: "Gagal mengunggah foto. Coba lagi." });
   }
 
-  const { data: publicUrlData } = adminClient.storage
-    .from("beans")
-    .getPublicUrl(fileName);
-
   return json(200, {
-    url: publicUrlData.publicUrl,
+    url: `/api/foto/${fileName}`,
     fileName,
   });
 };

@@ -19,6 +19,7 @@ export default function BatchDetailModal({ batch, onClose, onUpdated }: Props) {
   const [moistureInput, setMoistureInput] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<CacaoGrade>("A");
   const [verifiedSuccess, setVerifiedSuccess] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function BatchDetailModal({ batch, onClose, onUpdated }: Props) {
       setMoistureInput(String(initMoisture));
       setSelectedGrade(batch.grade === "B" ? "B" : "A");
       setVerifiedSuccess(false);
+      setVerifyError(null);
     }
   }, [batch]);
 
@@ -87,6 +89,7 @@ export default function BatchDetailModal({ batch, onClose, onUpdated }: Props) {
 
   const handleVerify = async () => {
     setIsVerifying(true);
+    setVerifyError(null);
     try {
       await verifyHarvestBatch(batch.id, {
         moisturePct: moistureNum,
@@ -96,7 +99,9 @@ export default function BatchDetailModal({ batch, onClose, onUpdated }: Props) {
       setVerifiedSuccess(true);
       if (onUpdated) onUpdated();
     } catch (e) {
-      console.error("Gagal memverifikasi batch:", e);
+      setVerifyError(
+        e instanceof Error ? e.message : "Gagal memverifikasi batch."
+      );
     } finally {
       setIsVerifying(false);
     }
@@ -224,6 +229,11 @@ export default function BatchDetailModal({ batch, onClose, onUpdated }: Props) {
                     </>
                   )}
                 </button>
+              )}
+              {verifyError && (
+                <p className="text-[11px] font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  {verifyError}
+                </p>
               )}
             </div>
 
